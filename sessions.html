@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Session Yönetimi</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background-color: #f8f9fa; padding: 40px; }
+    .summary-card { padding: 20px; border-radius: 12px; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.05); text-align: center; cursor:pointer;}
+    .summary-card.active { border: 2px solid #0d6efd; }
+    .user-link { color: #0d6efd; cursor: pointer; text-decoration: none; font-weight: bold; }
+    .user-link:hover { text-decoration: underline; }
+    .status-badge { padding: 6px 12px; border-radius: 16px; font-size: 13px; font-weight: bold; }
+    .active { background-color: #d1e7dd; color: #0f5132; }
+    .pending { background-color: #fff3cd; color: #664d03; }
+    .invalid { background-color: #f8d7da; color: #842029; }
+    .blocked-badge { background: #ff2532 !important; color: #fff !important; }
+    .blocked-row { background: #ffeaea !important; color: #c8000c !important; }
+    .avatar { display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #0d6efd; color: white; text-align: center; line-height: 24px; font-size: 12px; margin-right: 6px; }
+    .icon-btn { border: none; background: none; cursor:pointer; color:#444; margin-left:6px;}
+    .icon-btn:hover { color:#c8000c; }
+    .notif-bar { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: #d1ecf1; color: #0c5460; padding: 10px 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,.2); display: none; z-index: 9999; animation: fadeout 5s forwards;}
+    @keyframes fadeout { 0% {opacity: 1;} 90% {opacity: 1;} 100% {opacity: 0; display: none;} }
+    #notif-modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(30,30,40,0.5); z-index: 998; }
+    #notif-modal { display: none; position: fixed; top: 8%; left: 50%; transform: translateX(-50%); width: 420px; max-width: 97vw; z-index: 999; background: #fff; padding: 22px 20px 12px 20px; border-radius: 14px; box-shadow: 0 12px 44px #3336; }
+    @media (max-width: 600px) { #notif-modal { width: 97vw; left: 1.5vw; transform: none;} }
+    .edit-btn { color:#0d6efd; margin-left:8px;}
+    .edit-btn:hover { color:#0a45ad;}
+    .del-btn { color:#dc3545; }
+    .del-btn:hover { color:#a6141b;}
+    .table th { cursor:pointer; }
+    textarea.cookie { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div id="notifBar" class="notif-bar"></div>
+
+  <!-- Canlı Bildirim Satırı ve Son 100 İndirme Modalı -->
+  <div class="mb-3" id="live-notif-box" style="background:#eef;border:1px solid #ccd;padding:8px 16px;">
+    <b>Canlı Bildirim:</b>
+    <span id="notif-live-msg" style="color:#222;font-weight:500"></span>
+    <a href="#" id="show-last100" style="margin-left:24px;font-size:13px;">Son 100 indirme</a>
+  </div>
+
+  <!-- Modal/Popup kutusu -->
+  <div id="notif-modal-bg"></div>
+  <div id="notif-modal">
+    <div style="text-align:right">
+      <a href="#" onclick="closeNotifModal();return false;" style="color:#e06;font-weight:bold">✕ Kapat</a>
+    </div>
+    <b>Son 100 İndirme:</b>
+    <ul id="notif-last100-list" style="font-size:14px;max-height:48vh;overflow-y:auto;padding-left:1em"></ul>
+  </div>
+
+  <h2 class="text-center mb-4">Session Yönetimi</h2>
+
+  <div class="row text-center mb-4">
+    <div class="col-md-3"><div class="summary-card" id="sum-total" onclick="filterSessions('total')">👤 Toplam<br><strong id="sumTotalCount">{{ sessions|length }}</strong></div></div>
+    <div class="col-md-3"><div class="summary-card" id="sum-active" onclick="filterSessions('active')">✅ Aktif<br>
+      <strong id="sumActiveCount">
+        {{ sessions|selectattr("status", "equalto", "active")|rejectattr("blocked")|list|length }}
+      </strong>
+    </div></div>
+    <div class="col-md-3"><div class="summary-card" id="sum-pending" onclick="filterSessions('pending')">⚠️ Beklemede<br>
+      <strong id="sumPendingCount">{{ sessions|selectattr("status", "equalto", "pending")|list|length }}</strong></div></div>
+    <div class="col-md-3"><div class="summary-card" id="sum-invalid" onclick="filterSessions('invalid')">❌ Bozuk<br>
+      <strong id="sumInvalidCount">
+        {{ sessions|selectattr("status", "equalto", "invalid")|list|length +
+          sessions|selectattr("blocked")|list|length }}
+      </strong>
+    </div></div>
+  </div>
+
+  <div class="text-end mb-3">
+    <button id="btnTestAll" class="btn btn-outline-primary me-2" onclick="testAll()">🧪 Tümünü Test Et</button>
+    <button class="btn btn-outline-dark me-2" onclick="openNewSessionModal()">➕ Yeni Session Ekle</button>
+    <button class="btn btn-outline-dark position-relative" onclick="openLogModal()">
+      🔔 Loglar
+      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="logCount">0</span>
+    </button>
+  </div>
+
+  <table class="table table-bordered bg-white" id="sessionTable">
+    <thead class="table-light">
+      <tr>
+        <th onclick="sortSessions('session_key')">ID <i class="bi bi-sort-down"></i></th>
+        <th>Kullanıcı</th>
+        <th>sessionid</th>
+        <th>ds_user_id</th>
+        <th>İndirme</th>
+        <th>Durum</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="sessionTbody">
+      {% for sess in sessions|sort(attribute='session_key') %}
+      <tr data-status="{{ sess.status or 'active' }}" data-blocked="{{ '1' if sess.blocked else '0' }}">
+        <td><code>{{ sess.session_key }}</code></td>
+        <td><span class="avatar">{{ sess.user[0]|upper }}</span>
+          <span class="user-link" onclick="openUserModal('{{ sess.user }}')">{{ sess.user }}</span></td>
+        <td>{{ sess.sessionid[:15] }}...</td>
+        <td>{{ sess.ds_user_id }}</td>
+        <td>{{ sess.success_count }}</td>
+        <td>
+          {% set st = sess.status if sess.status else "active" %}
+          {% if sess.blocked %}
+            <span class="status-badge blocked-badge">BLOKLU</span>
+          {% else %}
+            <span class="status-badge {{ st }}">{{ st.title() }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <!-- TEST butonu ve küçük canlı rozet -->
+          <button class="icon-btn" title="Test Et" data-sk="{{ sess.session_key }}" onclick="testOne('{{ sess.session_key }}')">
+            <i class="bi bi-activity"></i>
+          </button>
+          <span id="tb-{{ sess.session_key }}" class="ms-1 badge rounded-pill bg-light text-dark"></span>
+
+          <button class="icon-btn edit-btn" title="Edit" onclick="openUserModal('{{ sess.user }}')">
+            <i class="bi bi-pencil-square"></i>
+          </button>
+          <button class="icon-btn del-btn" title="Sil" onclick="confirmDelete('{{ sess.session_key }}')">
+            <i class="bi bi-trash3"></i>
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- SİLME MODAL -->
+  <div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content p-4">
+        <h5 class="mb-3 text-danger"><i class="bi bi-exclamation-triangle"></i> Session Silinecek</h5>
+        <p>Bu session'ı silmek istediğinize emin misiniz?</p>
+        <input type="hidden" id="deleteSessionKey">
+        <div class="text-end">
+          <button class="btn btn-secondary btn-sm me-2" data-bs-dismiss="modal">Vazgeç</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSession()">Sil</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG MODAL -->
+  <div class="modal fade" id="logModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content p-4">
+        <h5 class="mb-3">📜 Günlük Loglar</h5>
+        <div id="logContent" style="max-height: 400px; overflow-y:auto; font-family: monospace;"></div>
+        <div class="text-end mt-3">
+          <a href="{{ url_for('admin.delete_log') }}" class="btn btn-sm btn-danger">🗑 Logları Temizle</a>
+          <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Kapat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USER MODAL (Session Güncelle ve Ekle) -->
+  <div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content p-4">
+        <h5 id="userModalTitle" class="mb-3">Kullanıcı Detay</h5>
+        <div id="userSessionList" class="mb-3"></div>
+        <hr>
+        <h6>Yeni Session Ekle</h6>
+        <form id="userNewSessionForm">
+          <input name="user" id="newUserNameField" class="form-control mb-2" readonly>
+          <input name="sessionid" class="form-control mb-2" placeholder="sessionid (boş bırakabilirsiniz)">
+          <input name="ds_user_id" class="form-control mb-2" placeholder="ds_user_id (boş bırakabilirsiniz)">
+          <input name="csrftoken" class="form-control mb-2" placeholder="csrftoken (boş bırakabilirsiniz)">
+          <input name="proxy" class="form-control mb-2" placeholder="proxy (opsiyonel: http://user:pass@ip:port)">
+          <textarea name="cookie_dump" class="form-control mb-2 cookie" rows="4" placeholder="F12 → Application → Cookies tablosunu veya tek satır cookie stringini buraya yapıştırın."></textarea>
+          <button type="submit" class="btn btn-primary btn-sm">➕ Session Ekle</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW SESSION MODAL (Genel) -->
+  <div class="modal fade" id="newSessionModal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content p-4">
+        <h5 class="mb-3">Yeni Session Ekle</h5>
+        <form id="newSessionForm">
+          <input name="user" class="form-control mb-2" placeholder="Kullanıcı adı" required>
+          <input name="sessionid" class="form-control mb-2" placeholder="sessionid (boş bırakabilirsiniz)">
+          <input name="ds_user_id" class="form-control mb-2" placeholder="ds_user_id (boş bırakabilirsiniz)">
+          <input name="csrftoken" class="form-control mb-2" placeholder="csrftoken (boş bırakabilirsiniz)">
+          <input name="proxy" class="form-control mb-2" placeholder="proxy (opsiyonel: http://user:pass@ip:port)">
+          <textarea name="cookie_dump" class="form-control mb-2 cookie" rows="5" placeholder="F12 → Application → Cookies sekmesinde CTRL+A ile tablonun tamamını kopyalayıp yapıştırın veya 'Copy as cookie string' tek satırı yapıştırın."></textarea>
+          <button type="submit" class="btn btn-primary btn-sm">➕ Session Ekle</button>
+        </form>
+        <button class="btn btn-secondary btn-sm mt-2" data-bs-dismiss="modal">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bildirim ve Modal JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let currentUser = "";
+    let currentFilter = "total";
+
+    function fetchLiveNotif() {
+      fetch('/srdr-proadmin/get-latest-notif')
+        .then(res => res.json())
+        .then(data => {
+          let msgBox = document.getElementById('notif-live-msg');
+          if (data && data.message) {
+            msgBox.innerHTML = `<b>${data.timestamp ? data.timestamp.replace('T',' ').substring(0,19) : ''}</b> - ${data.message}`;
+          }
+        });
+    }
+    document.getElementById('show-last100').onclick = function(e){
+      e.preventDefault();
+      fetch('/srdr-proadmin/get-last-100-notifs')
+        .then(res => res.json())
+        .then(data => {
+          let ul = document.getElementById('notif-last100-list');
+          ul.innerHTML = '';
+          (data || []).reverse().forEach(function(n){
+            ul.innerHTML += `<li><b>${n.timestamp ? n.timestamp.replace('T',' ').substring(0,19) : ''}</b> - ${n.message || ''}</li>`;
+          });
+          document.getElementById('notif-modal-bg').style.display='block';
+          document.getElementById('notif-modal').style.display='block';
+        });
+    };
+    function closeNotifModal(){
+      document.getElementById('notif-modal-bg').style.display='none';
+      document.getElementById('notif-modal').style.display='none';
+    }
+    document.getElementById('notif-modal-bg').onclick = closeNotifModal;
+    setInterval(fetchLiveNotif, 3500); fetchLiveNotif();
+
+    function openLogModal() {
+      fetch("/srdr-proadmin/session-log")
+        .then(res => res.text())
+        .then(data => {
+          document.getElementById("logContent").innerText = data;
+          new bootstrap.Modal(document.getElementById("logModal")).show();
+        });
+    }
+    fetch("/srdr-proadmin/session-log")
+      .then(res => res.text())
+      .then(data => {
+        const lines = data.trim().split("\n").filter(Boolean).length;
+        document.getElementById("logCount").textContent = lines;
+      });
+
+    function filterSessions(type) {
+      let rows = document.querySelectorAll('#sessionTbody tr');
+      let active = document.getElementById('sum-active');
+      let pending = document.getElementById('sum-pending');
+      let invalid = document.getElementById('sum-invalid');
+      let total = document.getElementById('sum-total');
+      [active, pending, invalid, total].forEach(e=>e.classList.remove("active"));
+      if (type=="active") active.classList.add("active");
+      if (type=="pending") pending.classList.add("active");
+      if (type=="invalid") invalid.classList.add("active");
+      if (type=="total") total.classList.add("active");
+      rows.forEach(row=>{
+        let st = row.getAttribute("data-status");
+        let blocked = row.getAttribute("data-blocked");
+        let show = false;
+        if (type=="active") show = (st=="active" && blocked!="1");
+        else if (type=="pending") show = (st=="pending");
+        else if (type=="invalid") show = (st=="invalid" || blocked=="1");
+        else show = true;
+        row.style.display = show ? "" : "none";
+      });
+    }
+    function sortSessions(field) {
+      let tbody = document.getElementById('sessionTbody');
+      let rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a,b)=>{
+        let av = a.querySelector('td:first-child code').innerText;
+        let bv = b.querySelector('td:first-child code').innerText;
+        return av.localeCompare(bv, undefined, {numeric:true});
+      });
+      tbody.innerHTML = "";
+      rows.forEach(r=>tbody.appendChild(r));
+    }
+    sortSessions('session_key');
+
+    function confirmDelete(sessionKey) {
+      document.getElementById("deleteSessionKey").value = sessionKey;
+      new bootstrap.Modal(document.getElementById("deleteModal")).show();
+    }
+    function deleteSession() {
+      let key = document.getElementById("deleteSessionKey").value;
+      fetch(`/srdr-proadmin/delete-session/${key}`, { method:"POST" })
+        .then(res => {
+          if(res.ok){ alert("Session silindi."); location.reload();}
+          else{ alert("Silinemedi!"); }
+        });
+    }
+
+    function openUserModal(username) {
+      currentUser = username;
+      document.getElementById("userModalTitle").innerText = `${username} - Sessionları`;
+      document.getElementById("newUserNameField").value = username;
+      fetch(`/srdr-proadmin/get-user-sessions/${username}`)
+        .then(res => res.json())
+        .then(data => {
+          let html = "";
+          data.forEach((s) => {
+            html += `
+              <form class="session-update-form mb-2 p-2 border rounded" data-session-key="${s.session_key}">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div><strong>ID: <code>${s.session_key}</code></strong>
+                    <span id="tb-${s.session_key}" class="ms-1 badge rounded-pill bg-light text-dark">—</span>
+                  </div>
+                  <div class="d-flex gap-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm icon-btn" data-sk="${s.session_key}" onclick="testOne('${s.session_key}')">
+                      <i class="bi bi-heart-pulse"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete('${s.session_key}')"><i class="bi bi-trash3"></i></button>
+                  </div>
+                </div>
+                <input name="sessionid" value="${s.sessionid}" class="form-control my-1" placeholder="sessionid">
+                <input name="ds_user_id" value="${s.ds_user_id}" class="form-control my-1" placeholder="ds_user_id">
+                <input name="csrftoken" value="${s.csrftoken}" class="form-control my-1" placeholder="csrftoken">
+                <input name="proxy" value="${s.proxy ? s.proxy : ''}" class="form-control my-1" placeholder="proxy (opsiyonel)">
+                <textarea name="cookie_dump" class="form-control my-1 cookie" rows="3" placeholder="F12 Cookies tablosunu veya tek satır cookie stringini yapıştırın (opsiyonel)"></textarea>
+                <button type="submit" class="btn btn-success btn-sm">Güncelle</button>
+              </form>`;
+          });
+          document.getElementById("userSessionList").innerHTML = html;
+
+          Array.from(document.getElementsByClassName('session-update-form')).forEach(function(form){
+            form.addEventListener("submit", function(e){
+              e.preventDefault();
+              const formData = new FormData(form);
+              fetch(`/srdr-proadmin/update-user-session/${currentUser}/${form.dataset.sessionKey}`, {
+                method: "POST",
+                body: formData
+              }).then(res => {
+                if (res.ok) { alert("Session güncellendi."); location.reload(); }
+                else { alert("Hata! Session güncellenemedi."); }
+              });
+            });
+          });
+        });
+      new bootstrap.Modal(document.getElementById("userModal")).show();
+    }
+
+    document.getElementById("userNewSessionForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      fetch(`/srdr-proadmin/add-user-session/${formData.get("user")}`, {
+        method: "POST",
+        body: formData
+      }).then(res => {
+        if (res.ok) {
+          alert("Session eklendi.");
+          location.reload();
+        } else {
+          res.text().then(t=>alert("Hata: " + t));
+        }
+      });
+    });
+
+    function openNewSessionModal() {
+      new bootstrap.Modal(document.getElementById("newSessionModal")).show();
+    }
+    document.getElementById("newSessionForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      fetch(`/srdr-proadmin/add-user-session/${formData.get("user")}`, {
+        method: "POST",
+        body: formData
+      }).then(res => {
+        if (res.ok) {
+          alert("Session eklendi.");
+          location.reload();
+        } else {
+          res.text().then(t=>alert("Hata: " + t));
+        }
+      });
+    });
+
+    // ------------- TEST Butonları: Tekli & Toplu -------------
+    function setTestBadge(sk, text, klass) {
+      const el = document.getElementById('tb-' + sk);
+      if (!el) return;
+      el.className = 'ms-1 badge rounded-pill ' + (klass || 'bg-light text-dark');
+      el.textContent = text;
+    }
+
+    async function testOneSK(sk) {
+      try {
+        setTestBadge(sk, 'TEST', 'bg-secondary');
+        const res = await fetch(`/srdr-proadmin/api/session/test/${sk}`, {
+          credentials: 'same-origin'
+        });
+        const statusCode = res.status;
+
+        // JSON değil ihtimali için önce text al, sonra parse etmeyi dene
+        const raw = await res.text();
+        let j = null;
+        try { j = JSON.parse(raw); } catch (_) { /* non-JSON */ }
+
+        // backend JSON ise
+        if (j) {
+          const http = j.http || statusCode;
+          if (j.ok) {
+            const map = { active: 'bg-success', blocked: 'bg-warning text-dark', invalid: 'bg-danger' };
+            setTestBadge(sk, `${(j.status || 'active').toUpperCase()} ${http}`, map[j.status] || 'bg-secondary');
+          } else {
+            // Örn: blocked/invalid veya diğer hatalar
+            const tag = (j.status ? j.status.toUpperCase() : 'ERROR');
+            const err = j.error || 'unknown';
+            const klass = (j.status === 'blocked') ? 'bg-warning text-dark' : 'bg-danger';
+            setTestBadge(sk, `${tag} ${http} ${err}`, klass);
+          }
+        } else {
+          // JSON gelmedi: büyük olasılık login HTML’i vs.
+          const short = (raw || '').slice(0, 60).replace(/\s+/g, ' ');
+          setTestBadge(sk, `ERROR ${statusCode} non-json`, 'bg-danger');
+          console.debug('test resp (non-JSON):', short);
+        }
+      } catch (e) {
+        setTestBadge(sk, 'NETERR', 'bg-danger');
+        console.error(e);
+      }
+    }
+
+    function testOne(sk) {
+      testOneSK(sk);
+    }
+
+    async function testAll() {
+      const btn = document.getElementById('btnTestAll');
+      if (btn) btn.disabled = true;
+      const keys = Array.from(document.querySelectorAll('button.icon-btn[data-sk]')).map(b => b.dataset.sk);
+      for (const sk of keys) {
+        await testOneSK(sk);
+      }
+      if (btn) btn.disabled = false;
+    }
+  </script>
+</div>
+</body>
+</html>
+

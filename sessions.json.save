@@ -1,0 +1,44 @@
+[
+  {
+    "user": "vido0606",
+    "ds_user_id": "76023930541",
+    "sessionid": "76023930541%3AMdEPJv17neTwxy%3A15%3AAYcninXMrVg2Bx2naR61grciOLAwN2c3iNvCun_WpA",
+    "csrftoken": "2CW72owAn1VKbDTvcjARAdGO39zBzkN4",
+
+    "cookies": {
+      "sessionid": "76023930541%3AMdEPJv17neTwxy%3A15%3AAYcninXMrVg2Bx2naR61grciOLAwN2c3iNvCun_WpA",
+      "ds_user_id": "76023930541",
+      "csrftoken": "2CW72owAn1VKbDTvcjARAdGO39zBzkN4",
+      "ig_did": "39848FD3-C52D-4FB1-9A68-C30EFE7F6865",
+      "rur": "CLN,76023930541,1786498629:01fecc27...",
+      "mid": "ZyKZowALAAFxBXkfi0NlI3Mx9oLx",
+      "ig_nrcb": "1",
+      "dpr": "1.25",
+      "wd": "412x914",
+      "datr": "oZkiZ2yxTlv5UknMSfb7RTMe",
+      "ps_l": "1",
+      "ps_n": "1",
+      "ig_direct_region_hint": "NHA,76023930541,1786498628:01fe52..."
+    },
+
+    "fingerprint": {
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+      "sec_ch_ua": "\"Chromium\";v=\"123\", \"Google Chrome\";v=\"123\", \";Not A Brand\";v=\"99\"",
+      "sec_ch_ua_mobile": "?0",
+      "sec_ch_ua_platform": "\"Windows\"",
+      "accept_language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
+      "referer": "https://www.instagram.com/",
+      "x_ig_app_id": "1217981644879628",
+      "x_asbd_id": "129477"
+    },
+
+    "proxy": null,
+    "fail_count": 0,
+    "success_count": 5,
+    "last_used": "2025-08-11 23:38:41",
+    "status": "active",
+    "session_key": "58676084",
+    "blocked": false,
+    "unblock_at": null
+  }
+]
