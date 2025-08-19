@@ -1,0 +1,49 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ _('Önizleme') }} · {{ slot }}{% endblock %}
+{% block content %}
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="m-0">👁️ {{ _('Önizleme') }}: <code>{{ slot }}</code></h2>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.ads_dashboard') }}">← {{ _('Listeye Dön') }}</a>
+      <a class="btn btn-primary" href="{{ url_for('admin.ads_edit_slot', slot=slot) }}"><i class="fa-regular fa-pen-to-square me-1"></i>{{ _('Düzenle') }}</a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="mb-2">
+        <div class="small text-muted">
+          {{ _('Başlık') }}: <strong>{{ data.label or slot }}</strong> ·
+          {{ _('Durum') }}:
+          {% if data.active %}
+            <span class="badge bg-success">{{ _('Aktif') }}</span>
+          {% else %}
+            <span class="badge bg-secondary">{{ _('Pasif') }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if not data.active %}
+        <div class="alert alert-warning mb-3">
+          {{ _('Bu slot pasif. İçerik görünmez. Düzenle sayfasından Aktif yapın.') }}
+        </div>
+      {% endif %}
+
+      <div class="border rounded p-3" style="min-height:160px; background:#fff;">
+        <div id="previewAd" style="display:flex; justify-content:center; align-items:center;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const el = document.getElementById('previewAd');
+  fetch("{{ url_for('admin.ads_api_slot_html', slot=slot) }}", { credentials:'same-origin' })
+    .then(r => r.status === 204 ? '' : r.text())
+    .then(html => { el.innerHTML = html || '<div class="text-muted">{{ _("Boş içerik veya pasif slot.") }}</div>'; })
+    .catch(() => { el.innerHTML = '<div class="text-danger">{{ _("Yüklenemedi.") }}</div>'; });
+})();
+</script>
+{% endblock %}

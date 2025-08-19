@@ -1,0 +1,7 @@
+/* Basit admin ads stilleri */
+.ads-admin .copyable {
+  cursor: pointer;
+}
+.ads-admin .copyable:hover {
+  text-decoration: underline;
+}

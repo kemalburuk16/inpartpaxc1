@@ -1,0 +1,122 @@
+{% extends "admin/base.html" %}
+{% block title %}Analytics · Admin{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='admin/analytics.css') }}">
+<div class="container my-4">
+  <h2 class="mb-3">📊 Site Analytics</h2>
+  <ul class="nav nav-tabs mb-3" id="analytabs" role="tablist">
+    <li class="nav-item"><button class="nav-link active" id="genel-tab" data-bs-toggle="tab" data-bs-target="#genel" type="button" role="tab">Genel Bakış</button></li>
+    <li class="nav-item"><button class="nav-link" id="ziyaretci-tab" data-bs-toggle="tab" data-bs-target="#ziyaretci" type="button" role="tab">Ziyaretçi Bilgileri</button></li>
+    <li class="nav-item"><button class="nav-link" id="trafik-tab" data-bs-toggle="tab" data-bs-target="#trafik" type="button" role="tab">Trafik ve Sayfalar</button></li>
+    <li class="nav-item"><button class="nav-link" id="arama-tab" data-bs-toggle="tab" data-bs-target="#arama" type="button" role="tab">Arama ve Anahtar Kelimeler</button></li>
+  </ul>
+  <div class="tab-content" id="analytabsContent">
+    <!-- GENEL BAKIŞ -->
+    <div class="tab-pane fade show active" id="genel" role="tabpanel">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="card stat-card p-3 text-center">
+            <div class="display-5" id="realtimeUsers">...</div>
+            <div>Aktif Kullanıcı (Canlı)</div>
+            <small class="form-text">Şu anda sitede bulunan kullanıcı sayısı.</small>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div class="card p-3">
+            <canvas id="summaryChart" height="75"></canvas>
+            <small class="form-text mt-2">
+              Son 7 günün aktif kullanıcı, yeni kullanıcı ve sayfa görüntüleme trendi.
+            </small>
+          </div>
+        </div>
+      </div>
+      <div class="card mt-4">
+        <div class="card-body">
+          <h5>7 Günlük Kullanıcı & Sayfa Tablosu</h5>
+          <div id="analyticsTable"></div>
+        </div>
+      </div>
+    </div>
+    <!-- ZİYARETÇİ BİLGİLERİ -->
+    <div class="tab-pane fade" id="ziyaretci" role="tabpanel">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card p-3"><canvas id="countryChart"></canvas>
+            <small class="form-text">Ülkelere göre kullanıcı dağılımı</small>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card p-3"><canvas id="cityChart"></canvas>
+            <small class="form-text">En yoğun şehirler</small>
+          </div>
+        </div>
+      </div>
+      <div class="row g-3 mt-2">
+        <div class="col-md-4">
+          <div class="card p-3"><canvas id="deviceChart"></canvas>
+            <small class="form-text">Cihaz tipi: Mobil/Masaüstü/Tablet</small>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3"><canvas id="browserChart"></canvas>
+            <small class="form-text">Tarayıcı: Chrome/Safari...</small>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3"><canvas id="osChart"></canvas>
+            <small class="form-text">İşletim sistemi: Windows/Android...</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- TRAFİK & SAYFALAR -->
+    <div class="tab-pane fade" id="trafik" role="tabpanel">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card p-3"><canvas id="sourceChart"></canvas>
+            <small class="form-text">Trafik kaynakları</small>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card p-3"><canvas id="hourChart"></canvas>
+            <small class="form-text">Saatlik trafik (en yoğun saatler)</small>
+          </div>
+        </div>
+      </div>
+      <div class="card mt-4">
+        <div class="card-body">
+          <h5>En Çok Ziyaret Edilen Sayfalar</h5>
+          <div id="topPagesTable"></div>
+        </div>
+      </div>
+    </div>
+    <!-- ARAMA & ANAHTAR KELİMELER -->
+    <div class="tab-pane fade" id="arama" role="tabpanel">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card p-3"><canvas id="keywordChart"></canvas>
+            <small class="form-text">Kullanıcıların arama yaptığı anahtar kelimeler (site içi arama)</small>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card p-3"><canvas id="platformChart"></canvas>
+            <small class="form-text">Platform: Web, iOS, Android</small>
+          </div>
+        </div>
+      </div>
+      <div class="card mt-4">
+        <div class="card-body">
+          <h5>En Çok Aranan Anahtar Kelimeler</h5>
+          <div id="topKeywordsTable"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Bootstrap Icons (info ikonları için) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<!-- Modern Analytics.js -->
+<script src="{{ url_for('static', filename='admin/analytics.js') }}"></script>
+{% endblock %}

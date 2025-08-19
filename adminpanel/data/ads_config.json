@@ -1,0 +1,96 @@
+{
+  "slots": {
+    "header_top": {
+      "enabled": true,
+      "label": "Header Top (üst şerit)",
+      "code": "üst reklam şeridi ",
+      "active": true,
+      "html": "üst reklam şeridi "
+    },
+    "sidebar_left": {
+      "enabled": false,
+      "label": "Sidebar Left (sol)",
+      "code": "",
+      "active": false,
+      "html": ""
+    },
+    "sidebar_right": {
+      "enabled": true,
+      "label": "Sidebar Right (sağ)",
+      "code": "",
+      "active": true,
+      "html": ""
+    },
+    "bottom_bar_desktop": {
+      "enabled": true,
+      "label": "Bottom Bar (desktop)",
+      "code": "",
+      "active": true,
+      "html": ""
+    },
+    "bottom_bar_mobile": {
+      "enabled": true,
+      "label": "Bottom Bar (mobile)",
+      "code": "",
+      "active": true,
+      "html": ""
+    },
+    "below_header": {
+      "enabled": true,
+      "label": "Index Header Altı (form altı)",
+      "code": "reklam 2",
+      "active": true,
+      "html": "reklam 2"
+    },
+    "download_inline": {
+      "enabled": true,
+      "label": "Download İç İçi (yorum arası)",
+      "code": "",
+      "active": true,
+      "html": ""
+    },
+    "modal_fullscreen": {
+      "label": "Tam Ekran Modal",
+      "enabled": true,
+      "code": "<div class='ad ad-modal'>[Fullscreen Interstitial]</div>",
+      "active": true,
+      "html": "<div class='ad ad-modal'>[Fullscreen Interstitial]</div>"
+    },
+    "bottom_bar": {
+      "label": "Alt Sabit Çubuk",
+      "enabled": false,
+      "code": "<div>[Bottom Bar Ad]</div>",
+      "active": false,
+      "html": "<div>[Bottom Bar Ad]</div>"
+    },
+    "inline_ad": {
+      "label": "Yorum Arası",
+      "enabled": false,
+      "code": "<div>[Inline Ad]</div>",
+      "active": false,
+      "html": "<div>[Inline Ad]</div>"
+    },
+    "sticky_side": {
+      "label": "Yapışkan Sağ/Sol",
+      "enabled": false,
+      "code": "<div>[Sticky Side Ad]</div>",
+      "active": false,
+      "html": "<div>[Sticky Side Ad]</div>"
+    },
+    "top_banner": {
+      "label": "Navbar Altı Banner",
+      "enabled": false,
+      "code": "<div>[Top Banner Ad]</div>",
+      "active": false,
+      "html": "<div>[Top Banner Ad]</div>"
+    },
+    "floating_button": {
+      "label": "Kayan Buton",
+      "enabled": false,
+      "code": "<button>[Open Ad]</button>",
+      "active": false,
+      "html": "<button>[Open Ad]</button>"
+    }
+  },
+  "updated_at": 1754780781
+}

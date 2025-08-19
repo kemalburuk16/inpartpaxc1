@@ -1,0 +1,48 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ _('Slot Düzenle') }} · {{ slot }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('admin.static', filename='admin/ads.css') }}">
+
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="m-0">🧩 {{ _('Slot Düzenle') }}: <code>{{ slot }}</code></h2>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-info" target="_blank" href="{{ url_for('admin.ads_preview', slot=slot) }}"><i class="fa-regular fa-eye me-1"></i>{{ _('Önizle') }}</a>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.ads_dashboard') }}">← {{ _('Listeye Dön') }}</a>
+    </div>
+  </div>
+
+  <form method="post" class="card shadow-sm">
+    <div class="card-header bg-light fw-semibold">{{ _('Slot Bilgileri') }}</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">{{ _('Başlık') }}</label>
+          <input name="label" class="form-control" value="{{ data.label or slot }}" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">{{ _('Durum') }}</label>
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" id="active" name="active" {% if data.active %}checked{% endif %}>
+            <label class="form-check-label" for="active">{{ _('Aktif') }}</label>
+          </div>
+        </div>
+        <div class="col-12">
+          <label class="form-label">{{ _('HTML / Script Kodu') }}</label>
+          <textarea name="html_code" class="form-control" rows="10" placeholder="<!-- Reklam sağlayıcı kodunu buraya yapıştırın -->">{{ data.html }}</textarea>
+          <div class="form-text">
+            {{ _('Script etiketleri desteklenir. Kodu kaydettikten sonra Önizle ile kontrol edebilirsiniz.') }}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between">
+      <button class="btn btn-primary"><i class="fa-regular fa-floppy-disk me-1"></i>{{ _('Kaydet') }}</button>
+      <a class="btn btn-outline-info" target="_blank" href="{{ url_for('admin.ads_preview', slot=slot) }}"><i class="fa-regular fa-eye me-1"></i>{{ _('Önizle') }}</a>
+    </div>
+  </form>
+</div>
+
+<script src="{{ url_for('admin.static', filename='admin/ads.js') }}"></script>
+{% endblock %}

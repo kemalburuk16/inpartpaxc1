@@ -1,0 +1,39 @@
+{
+  "slots": {
+    "header_top": {
+      "enabled": true,
+      "label": "Header Top (üst şerit)",
+      "code": "üst reklam şeridi "
+    },
+    "sidebar_left": {
+      "enabled": false,
+      "label": "Sidebar Left (sol)",
+      "code": ""
+    },
+    "sidebar_right": {
+      "enabled": true,
+      "label": "Sidebar Right (sağ)",
+      "code": ""
+    },
+    "bottom_bar_desktop": {
+      "enabled": true,
+      "label": "Bottom Bar (desktop)",
+      "code": ""
+    },
+    "bottom_bar_mobile": {
+      "enabled": true,
+      "label": "Bottom Bar (mobile)",
+      "code": ""
+    },
+    "below_header": {
+      "enabled": true,
+      "label": "Index Header Altı (form altı)",
+      "code": "reklam 2"
+    },
+    "download_inline": {
+      "enabled": true,
+      "label": "Download İç İçi (yorum arası)",
+      "code": ""
+    }
+  }
+}
