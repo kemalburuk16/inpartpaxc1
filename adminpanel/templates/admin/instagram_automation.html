@@ -1,0 +1,434 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Instagram Otomasyon · InstaVido Admin{% endblock %}
+
+{% block content %}
+<div class="container-narrow">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Instagram Otomasyon</h2>
+    <div class="d-flex gap-2">
+      <button id="refreshBtn" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-clockwise"></i> Yenile
+      </button>
+      <button id="startSchedulerBtn" class="btn btn-success">
+        <i class="bi bi-play"></i> Zamanlayıcı Başlat
+      </button>
+      <button id="stopSchedulerBtn" class="btn btn-danger">
+        <i class="bi bi-stop"></i> Zamanlayıcı Durdur
+      </button>
+    </div>
+  </div>
+
+  <!-- Status Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-title text-muted">Zamanlayıcı Durumu</h6>
+          <h4 id="schedulerStatus" class="mb-0">-</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-title text-muted">Aktif Sessionlar</h6>
+          <h4 id="activeSessions" class="mb-0">-</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-title text-muted">Bugün Like</h6>
+          <h4 id="todayLikes" class="mb-0">-</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-title text-muted">Bugün Takip</h6>
+          <h4 id="todayFollows" class="mb-0">-</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Controls -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Manuel Aktivite Başlatma</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Süre (dakika)</label>
+              <input type="number" id="manualDuration" class="form-control" value="30" min="5" max="180">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Session Sayısı</label>
+              <input type="number" id="manualSessionCount" class="form-control" value="1" min="1" max="10">
+            </div>
+            <div class="col-12">
+              <button id="startManualBtn" class="btn btn-primary w-100">
+                <i class="bi bi-play-circle"></i> Manuel Otomasyon Başlat
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Hızlı Aktiviteler</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-6">
+              <button class="btn btn-outline-primary w-100" onclick="triggerActivity('browse_feed')">
+                <i class="bi bi-house"></i> Feed Gezinti
+              </button>
+            </div>
+            <div class="col-6">
+              <button class="btn btn-outline-primary w-100" onclick="triggerActivity('browse_explore')">
+                <i class="bi bi-compass"></i> Keşfet Gezinti
+              </button>
+            </div>
+            <div class="col-6">
+              <button class="btn btn-outline-primary w-100" onclick="triggerActivity('browse_reels')">
+                <i class="bi bi-film"></i> Reels Gezinti
+              </button>
+            </div>
+            <div class="col-6">
+              <button class="btn btn-outline-success w-100" onclick="triggerActivity('random_session')">
+                <i class="bi bi-shuffle"></i> Rastgele Session
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Sessions -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Aktif Otomasyon Sessionları</h5>
+      <button id="stopAllBtn" class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-stop-circle"></i> Tümünü Durdur
+      </button>
+    </div>
+    <div class="card-body">
+      <div id="activeSessionsList">
+        <div class="text-center text-muted py-3">
+          <i class="bi bi-hourglass-split"></i> Yükleniyor...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Log -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Son Aktiviteler</h5>
+    </div>
+    <div class="card-body">
+      <div id="activityLog">
+        <div class="text-center text-muted py-3">
+          <i class="bi bi-hourglass-split"></i> Yükleniyor...
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentStatus = {};
+
+// Load status on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadStatus();
+  setInterval(loadStatus, 10000); // Refresh every 10 seconds
+});
+
+// Load automation status
+async function loadStatus() {
+  try {
+    const response = await fetch('/srdr-proadmin/api/automation/status');
+    const result = await response.json();
+    
+    if (result.success) {
+      currentStatus = result.data;
+      updateStatusDisplay();
+      updateActiveSessionsList();
+    }
+  } catch (error) {
+    console.error('Status yüklenirken hata:', error);
+  }
+}
+
+// Update status display
+function updateStatusDisplay() {
+  document.getElementById('schedulerStatus').textContent = 
+    currentStatus.is_running ? 'Çalışıyor' : 'Durdurulmuş';
+  
+  document.getElementById('activeSessions').textContent = 
+    currentStatus.active_sessions_count || 0;
+  
+  const stats = currentStatus.session_stats || {};
+  const todayActivities = stats.today_activities || {};
+  
+  document.getElementById('todayLikes').textContent = 
+    todayActivities.likes || 0;
+  
+  document.getElementById('todayFollows').textContent = 
+    todayActivities.follows || 0;
+  
+  // Update button states
+  document.getElementById('startSchedulerBtn').disabled = currentStatus.is_running;
+  document.getElementById('stopSchedulerBtn').disabled = !currentStatus.is_running;
+}
+
+// Update active sessions list
+function updateActiveSessionsList() {
+  const container = document.getElementById('activeSessionsList');
+  const activeSessions = currentStatus.active_sessions || {};
+  
+  if (Object.keys(activeSessions).length === 0) {
+    container.innerHTML = `
+      <div class="text-center text-muted py-3">
+        <i class="bi bi-pause-circle"></i> Aktif session bulunmuyor
+      </div>
+    `;
+    return;
+  }
+  
+  let html = '';
+  for (const [sessionId, session] of Object.entries(activeSessions)) {
+    const statusClass = session.status === 'running' ? 'success' : 
+                       session.status === 'error' ? 'danger' : 'warning';
+    
+    html += `
+      <div class="border rounded p-3 mb-2">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <strong>${session.username}</strong>
+            <span class="badge bg-${statusClass}">${session.status}</span>
+          </div>
+          <div class="d-flex gap-2">
+            <small class="text-muted">${session.duration_minutes} dk</small>
+            <button class="btn btn-sm btn-outline-danger" onclick="stopSession('${sessionId}')">
+              <i class="bi bi-stop"></i>
+            </button>
+          </div>
+        </div>
+        <small class="text-muted">Başlangıç: ${session.start_time}</small>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
+}
+
+// Load activity log
+async function loadActivityLog() {
+  try {
+    const response = await fetch('/srdr-proadmin/api/automation/activity-log?limit=20');
+    const result = await response.json();
+    
+    if (result.success) {
+      updateActivityLogDisplay(result.activities);
+    }
+  } catch (error) {
+    console.error('Aktivite logu yüklenirken hata:', error);
+  }
+}
+
+// Update activity log display
+function updateActivityLogDisplay(activities) {
+  const container = document.getElementById('activityLog');
+  
+  if (activities.length === 0) {
+    container.innerHTML = `
+      <div class="text-center text-muted py-3">
+        <i class="bi bi-clock-history"></i> Henüz aktivite kaydı yok
+      </div>
+    `;
+    return;
+  }
+  
+  let html = '';
+  activities.slice(-10).reverse().forEach(activity => {
+    const date = new Date(activity.timestamp);
+    const timeStr = date.toLocaleTimeString('tr-TR');
+    const statusIcon = activity.success ? '✅' : '❌';
+    
+    html += `
+      <div class="border-bottom py-2">
+        <div class="d-flex justify-content-between">
+          <span>${statusIcon} <strong>${activity.username}</strong> - ${activity.activity_type}</span>
+          <small class="text-muted">${timeStr}</small>
+        </div>
+        ${activity.target ? `<small class="text-muted">Hedef: ${activity.target}</small>` : ''}
+      </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+}
+
+// Event handlers
+document.getElementById('refreshBtn').addEventListener('click', function() {
+  loadStatus();
+  loadActivityLog();
+});
+
+document.getElementById('startSchedulerBtn').addEventListener('click', async function() {
+  try {
+    const response = await fetch('/srdr-proadmin/api/automation/scheduler/start', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'}
+    });
+    const result = await response.json();
+    
+    if (result.success) {
+      showAlert('Zamanlayıcı başlatıldı', 'success');
+      loadStatus();
+    } else {
+      showAlert('Hata: ' + result.error, 'danger');
+    }
+  } catch (error) {
+    showAlert('Zamanlayıcı başlatılırken hata oluştu', 'danger');
+  }
+});
+
+document.getElementById('stopSchedulerBtn').addEventListener('click', async function() {
+  try {
+    const response = await fetch('/srdr-proadmin/api/automation/scheduler/stop', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'}
+    });
+    const result = await response.json();
+    
+    if (result.success) {
+      showAlert('Zamanlayıcı durduruldu', 'warning');
+      loadStatus();
+    } else {
+      showAlert('Hata: ' + result.error, 'danger');
+    }
+  } catch (error) {
+    showAlert('Zamanlayıcı durdurulurken hata oluştu', 'danger');
+  }
+});
+
+document.getElementById('startManualBtn').addEventListener('click', async function() {
+  const duration = document.getElementById('manualDuration').value;
+  const sessionCount = document.getElementById('manualSessionCount').value;
+  
+  try {
+    const response = await fetch('/srdr-proadmin/api/automation/start', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        duration: parseInt(duration),
+        session_count: parseInt(sessionCount)
+      })
+    });
+    const result = await response.json();
+    
+    if (result.success) {
+      showAlert(`${result.sessions_started} session başlatıldı`, 'success');
+      loadStatus();
+    } else {
+      showAlert('Hata: ' + result.error, 'danger');
+    }
+  } catch (error) {
+    showAlert('Manuel otomasyon başlatılırken hata oluştu', 'danger');
+  }
+});
+
+document.getElementById('stopAllBtn').addEventListener('click', async function() {
+  try {
+    const response = await fetch('/srdr-proadmin/api/automation/stop', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'}
+    });
+    const result = await response.json();
+    
+    if (result.success) {
+      showAlert(`${result.stopped_sessions} session durduruldu`, 'warning');
+      loadStatus();
+    } else {
+      showAlert('Hata: ' + result.error, 'danger');
+    }
+  } catch (error) {
+    showAlert('Sessionlar durdurulurken hata oluştu', 'danger');
+  }
+});
+
+// Stop specific session
+async function stopSession(sessionId) {
+  try {
+    const response = await fetch('/srdr-proadmin/api/automation/stop', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ session_id: sessionId })
+    });
+    const result = await response.json();
+    
+    if (result.success) {
+      showAlert('Session durduruldu', 'warning');
+      loadStatus();
+    } else {
+      showAlert('Session durdurulamadı', 'danger');
+    }
+  } catch (error) {
+    showAlert('Session durdurulurken hata oluştu', 'danger');
+  }
+}
+
+// Trigger quick activity
+async function triggerActivity(activityType) {
+  try {
+    const response = await fetch('/srdr-proadmin/api/automation/manual-trigger', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ activity_type: activityType })
+    });
+    const result = await response.json();
+    
+    if (result.success) {
+      showAlert(`${activityType} aktivitesi başlatıldı`, 'success');
+      loadActivityLog();
+    } else {
+      showAlert('Hata: ' + result.error, 'danger');
+    }
+  } catch (error) {
+    showAlert('Aktivite başlatılırken hata oluştu', 'danger');
+  }
+}
+
+// Show alert
+function showAlert(message, type) {
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+  alertDiv.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  
+  document.querySelector('.container-narrow').insertBefore(alertDiv, document.querySelector('.container-narrow').firstChild);
+  
+  setTimeout(() => {
+    alertDiv.remove();
+  }, 5000);
+}
+
+// Load activity log on page load
+loadActivityLog();
+</script>
+{% endblock %}

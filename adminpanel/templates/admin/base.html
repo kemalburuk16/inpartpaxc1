@@ -38,6 +38,9 @@
       <a class="nav-link {% if request.endpoint=='admin.analytics' %}active{% endif %}"
          href="{{ url_for('admin.analytics') }}">📊 Analytics</a>
 
+      <a class="nav-link {% if request.endpoint=='admin.instagram_automation' %}active{% endif %}"
+         href="{{ url_for('admin.instagram_automation') }}">🤖 Instagram Otomasyon</a>
+
       <a class="nav-link {% if request.endpoint=='admin.ads_page' %}active{% endif %}"
          href="{{ url_for('admin.ads_page') }}">📢 Reklam Yönetimi</a>
 
