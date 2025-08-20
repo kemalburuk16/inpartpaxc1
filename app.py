@@ -12,7 +12,9 @@ from flask import (
     url_for, session, Response, send_file, jsonify
 )
 from flask_session import Session
-from flask_babelex import Babel, _
+# from flask_babelex import Babel, _  # Temporarily disabled due to compatibility issue
+def _(text):
+    return text  # Mock translation function
 from adminpanel.blacklist_admin import blacklist_admin_bp
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -91,7 +93,9 @@ def _has_allowed_referer(req) -> bool:
 RECAPTCHA_SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY", "").strip()
 RECAPTCHA_SECRET   = os.getenv("RECAPTCHA_SECRET", "").strip()
 
-RATE_FILE = "/var/www/instavido/.rate_limits.json"
+# Paths (fix for running in different environments)
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+RATE_FILE = os.path.join(BASE_DIR, "data", "rate_limit.json")
 os.makedirs(os.path.dirname(RATE_FILE), exist_ok=True)
 if not os.path.exists(RATE_FILE):
     with open(RATE_FILE, "w") as f:
@@ -131,7 +135,7 @@ class SimpleLimiter:
 soft_limiter = SimpleLimiter(window_seconds=60, max_requests=60, burst=80)
 
 # Kara liste dosyası
-BLACKLIST_PATH = "/var/www/instavido/adminpanel/data/blacklist.json"
+BLACKLIST_PATH = os.path.join(BASE_DIR, "adminpanel", "data", "blacklist.json")
 
 def _load_blacklist():
     if not os.path.exists(BLACKLIST_PATH):
@@ -293,13 +297,13 @@ app.jinja_env.globals.update(
 # --- Redis tabanlı rate limiter (ek katman) ---
 limiter = Limiter(
     key_func=get_remote_address,
-    storage_uri=os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0"),
+    storage_uri="memory://",  # Use memory storage instead of redis
     strategy="fixed-window",
     app=app,
 )
 
 # os.makedirs(SESSION_DIR, exist_ok=True)
-Session(app)
+# Session(app)  # Disabled for now to avoid redis dependency
 app.url_map.strict_slashes = False
 
 # --- Ads runtime (server-side fallback) ---
@@ -315,14 +319,14 @@ app.logger.setLevel(logging.DEBUG)
 
 app.config['BABEL_DEFAULT_LOCALE'] = 'en'
 app.config['BABEL_TRANSLATION_DIRECTORIES'] = os.path.join(BASE_DIR, "translations")
-babel = Babel(app)
+# babel = Babel(app)  # Disabled for now
 LANGUAGES = ['en', 'tr', 'hi', 'de', 'fr', 'ko', 'ar', 'es']
 app.jinja_env.globals.update(LANGUAGES=LANGUAGES)
 
 # --------------------------------------------------------------------------- #
 #  DİL SEÇİMİ                                                                 #
 # --------------------------------------------------------------------------- #
-@babel.localeselector
+# @babel.localeselector  # Disabled for now
 def get_locale():
     segments = request.path.strip('/').split('/')
     if segments and segments[0] in LANGUAGES:
