@@ -1,0 +1,23 @@
+2025-08-20 00:28:04,354 - root - WARNING - Could not import existing session modules
+2025-08-20 00:28:04,354 - root - WARNING - Could not import existing session modules
+2025-08-20 00:28:04,354 - instagram_bot - INFO - Loaded 7 sessions
+Instagram Bot - Demo Version
+============================
+✓ Configuration loaded successfully
+  - Target hashtags: ['nature', 'photography', 'travel', 'lifestyle']
+  - Daily like limit: 100
+  - Hourly like limit: 15
+✓ Logging setup completed
+✓ Session manager initialized
+  - Total sessions: 7
+  - Active sessions: 4
+  - Invalid sessions: 3
+
+Available Actions:
+- Like posts from hashtags
+- Follow users
+- Unfollow old follows
+- Get statistics
+- Run maintenance
+
+Bot is ready! Use main.py with proper arguments to run automation.
