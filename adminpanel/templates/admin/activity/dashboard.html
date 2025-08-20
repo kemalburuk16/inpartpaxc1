@@ -1,0 +1,349 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Instagram Aktivite Dashboard · Admin{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('admin.static', filename='admin/activity.css') }}">
+
+<div class="container-narrow activity-dashboard">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">🤖 Instagram Aktivite Dashboard</h2>
+      <p class="text-muted">Otomatik beğenme, takip ve session yönetimi</p>
+    </div>
+    <div>
+      <button class="btn btn-outline-success" id="toggleActivity">
+        <span id="toggleText">{% if config.enabled %}Devre Dışı Bırak{% else %}Etkinleştir{% endif %}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Status Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body text-center">
+          <h5 class="card-title text-primary">{{ stats.likes_today }}</h5>
+          <p class="card-text">Bugün Beğeni</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body text-center">
+          <h5 class="card-title text-info">{{ stats.follows_today }}</h5>
+          <p class="card-text">Bugün Takip</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body text-center">
+          <h5 class="card-title text-success">{{ stats.success_rate }}%</h5>
+          <p class="card-text">Başarı Oranı</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body text-center">
+          <h5 class="card-title text-warning">{{ session_status.active_sessions }}/{{ session_status.total_sessions }}</h5>
+          <p class="card-text">Aktif Session</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Hızlı İşlemler</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Hashtag Beğen</label>
+            <div class="input-group">
+              <span class="input-group-text">#</span>
+              <input type="text" class="form-control" id="quickHashtag" placeholder="travel">
+              <input type="number" class="form-control" id="quickHashtagLimit" value="10" min="1" max="50" style="max-width: 80px;">
+              <button class="btn btn-primary" id="quickLikeBtn">Beğen</button>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Kullanıcı Takip Et</label>
+            <div class="input-group">
+              <span class="input-group-text">@</span>
+              <input type="text" class="form-control" id="quickUsername" placeholder="username">
+              <button class="btn btn-info" id="quickFollowBtn">Takip Et</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <button class="btn btn-success" id="keepAliveBtn">
+            <i class="bi bi-heart-pulse"></i> Session'ları Canlı Tut
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Targets -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0">Hedef Hashtag'ler</h6>
+        </div>
+        <div class="card-body">
+          {% if targets.hashtags %}
+            {% for hashtag in targets.hashtags %}
+              <span class="badge bg-primary me-1 mb-1">#{{ hashtag }}</span>
+            {% endfor %}
+          {% else %}
+            <p class="text-muted">Henüz hashtag eklenmemiş</p>
+          {% endif %}
+          <div class="mt-2">
+            <a href="{{ url_for('activity.likes_management') }}" class="btn btn-sm btn-outline-primary">Yönet</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0">Hedef Hesaplar</h6>
+        </div>
+        <div class="card-body">
+          {% if targets.accounts %}
+            {% for account in targets.accounts %}
+              <span class="badge bg-info me-1 mb-1">@{{ account }}</span>
+            {% endfor %}
+          {% else %}
+            <p class="text-muted">Henüz hesap eklenmemiş</p>
+          {% endif %}
+          <div class="mt-2">
+            <a href="{{ url_for('activity.follows_management') }}" class="btn btn-sm btn-outline-info">Yönet</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Son Aktiviteler</h5>
+    </div>
+    <div class="card-body">
+      {% if recent_logs %}
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Zaman</th>
+                <th>Tip</th>
+                <th>Hedef</th>
+                <th>Durum</th>
+                <th>Detay</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in recent_logs[-10:] %}
+                <tr>
+                  <td><small>{{ log.timestamp[:19].replace('T', ' ') }}</small></td>
+                  <td>
+                    {% if log.activity_type == 'like' %}
+                      <span class="badge bg-primary">Beğeni</span>
+                    {% elif log.activity_type == 'follow' %}
+                      <span class="badge bg-info">Takip</span>
+                    {% elif log.activity_type == 'keep_alive' %}
+                      <span class="badge bg-success">Canlı Tut</span>
+                    {% else %}
+                      <span class="badge bg-secondary">{{ log.activity_type }}</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ log.target }}</td>
+                  <td>
+                    {% if log.success %}
+                      <span class="text-success"><i class="bi bi-check-circle"></i></span>
+                    {% else %}
+                      <span class="text-danger"><i class="bi bi-x-circle"></i></span>
+                    {% endif %}
+                  </td>
+                  <td><small>{{ log.details[:50] }}{% if log.details|length > 50 %}...{% endif %}</small></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted">Henüz aktivite kaydı yok</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const toggleBtn = document.getElementById('toggleActivity');
+  const toggleText = document.getElementById('toggleText');
+  let isEnabled = {{ config.enabled|tojson }};
+
+  // Toggle activity system
+  toggleBtn.addEventListener('click', function() {
+    fetch('{{ url_for("activity.api_toggle") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ enabled: !isEnabled })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        isEnabled = data.enabled;
+        toggleText.textContent = isEnabled ? 'Devre Dışı Bırak' : 'Etkinleştir';
+        toggleBtn.className = isEnabled ? 'btn btn-outline-danger' : 'btn btn-outline-success';
+        showAlert(data.message, 'success');
+      } else {
+        showAlert(data.error, 'danger');
+      }
+    })
+    .catch(error => {
+      showAlert('Bir hata oluştu: ' + error.message, 'danger');
+    });
+  });
+
+  // Quick like hashtag
+  document.getElementById('quickLikeBtn').addEventListener('click', function() {
+    const hashtag = document.getElementById('quickHashtag').value.trim();
+    const limit = document.getElementById('quickHashtagLimit').value;
+    
+    if (!hashtag) {
+      showAlert('Hashtag gerekli', 'warning');
+      return;
+    }
+
+    this.disabled = true;
+    this.textContent = 'İşlem yapılıyor...';
+
+    fetch('{{ url_for("activity.api_like_hashtag") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ hashtag: hashtag, limit: parseInt(limit) })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showAlert(`${data.liked_count}/${data.total_posts} post beğenildi`, 'success');
+        document.getElementById('quickHashtag').value = '';
+      } else {
+        showAlert(data.error, 'danger');
+      }
+      this.disabled = false;
+      this.textContent = 'Beğen';
+    })
+    .catch(error => {
+      showAlert('Bir hata oluştu: ' + error.message, 'danger');
+      this.disabled = false;
+      this.textContent = 'Beğen';
+    });
+  });
+
+  // Quick follow user
+  document.getElementById('quickFollowBtn').addEventListener('click', function() {
+    const username = document.getElementById('quickUsername').value.trim();
+    
+    if (!username) {
+      showAlert('Kullanıcı adı gerekli', 'warning');
+      return;
+    }
+
+    this.disabled = true;
+    this.textContent = 'Takip ediliyor...';
+
+    fetch('{{ url_for("activity.api_follow_user") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username: username })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showAlert(data.message, 'success');
+        document.getElementById('quickUsername').value = '';
+      } else {
+        showAlert(data.error, 'danger');
+      }
+      this.disabled = false;
+      this.textContent = 'Takip Et';
+    })
+    .catch(error => {
+      showAlert('Bir hata oluştu: ' + error.message, 'danger');
+      this.disabled = false;
+      this.textContent = 'Takip Et';
+    });
+  });
+
+  // Keep alive sessions
+  document.getElementById('keepAliveBtn').addEventListener('click', function() {
+    this.disabled = true;
+    this.innerHTML = '<i class="bi bi-heart-pulse"></i> İşlem yapılıyor...';
+
+    fetch('{{ url_for("activity.api_keep_alive") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const result = data.result;
+        showAlert(`${result.sessions_activated}/${result.sessions_checked} session aktifleştirildi`, 'success');
+      } else {
+        showAlert(data.error, 'danger');
+      }
+      this.disabled = false;
+      this.innerHTML = '<i class="bi bi-heart-pulse"></i> Session\'ları Canlı Tut';
+    })
+    .catch(error => {
+      showAlert('Bir hata oluştu: ' + error.message, 'danger');
+      this.disabled = false;
+      this.innerHTML = '<i class="bi bi-heart-pulse"></i> Session\'ları Canlı Tut';
+    });
+  });
+
+  function showAlert(message, type) {
+    // Simple alert implementation
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+      alertDiv.remove();
+    }, 5000);
+  }
+});
+</script>
+
+<script src="{{ url_for('admin.static', filename='admin/activity.js') }}"></script>
+{% endblock %}

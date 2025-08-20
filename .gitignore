@@ -1,0 +1,25 @@
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+
+# IDE files
+.vscode/
+.idea/
+
+# Log files
+*.log
+
+# Data files (sensitive)
+data/rate_limit.json
+
+# Session files
+session_idx.txt
+
+# Cache
+.cache/

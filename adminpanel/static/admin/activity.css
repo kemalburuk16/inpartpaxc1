@@ -1,0 +1,78 @@
+/* Activity System Styles */
+.activity-dashboard .card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: none;
+    border-radius: 8px;
+}
+
+.activity-dashboard .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.activity-status-card {
+    transition: transform 0.2s ease;
+}
+
+.activity-status-card:hover {
+    transform: translateY(-2px);
+}
+
+.hashtag-item .badge {
+    position: relative;
+}
+
+.account-item .badge {
+    position: relative;
+}
+
+.alert-floating {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+}
+
+.activity-log-table {
+    font-size: 0.875rem;
+}
+
+.activity-log-table td {
+    vertical-align: middle;
+}
+
+.btn-activity {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+}
+
+.btn-activity:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6c5b95 100%);
+    color: white;
+}
+
+.form-switch .form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.nav-link.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .activity-dashboard .col-md-3 {
+        margin-bottom: 1rem;
+    }
+    
+    .alert-floating {
+        left: 20px;
+        right: 20px;
+        max-width: none;
+    }
+}

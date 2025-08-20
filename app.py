@@ -3226,6 +3226,10 @@ def contact(lang="en"):
 app.register_blueprint(admin_bp, url_prefix='/srdr-proadmin')
 app.register_blueprint(blacklist_admin_bp)
 
+# Activity blueprint'i kaydet
+from adminpanel.activity_views import activity_bp
+app.register_blueprint(activity_bp)
+
 @app.route('/robots.txt')
 def robots_txt():
     return send_file('robots.txt', mimetype='text/plain')

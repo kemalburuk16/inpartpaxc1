@@ -1,0 +1,10 @@
+{
+  "like_delay_min": 30,
+  "like_delay_max": 120,
+  "follow_delay_min": 60,
+  "follow_delay_max": 300,
+  "daily_like_limit": 500,
+  "daily_follow_limit": 200,
+  "session_keep_alive_interval": 1800,
+  "enabled": false
+}

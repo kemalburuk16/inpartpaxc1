@@ -38,6 +38,9 @@
       <a class="nav-link {% if request.endpoint=='admin.analytics' %}active{% endif %}"
          href="{{ url_for('admin.analytics') }}">📊 Analytics</a>
 
+      <a class="nav-link {% if request.endpoint in ['activity.dashboard', 'activity.likes_management', 'activity.follows_management', 'activity.scheduler'] %}active{% endif %}"
+         href="{{ url_for('activity.dashboard') }}">🤖 Instagram Aktivite</a>
+
       <a class="nav-link {% if request.endpoint=='admin.ads_page' %}active{% endif %}"
          href="{{ url_for('admin.ads_page') }}">📢 Reklam Yönetimi</a>
 
