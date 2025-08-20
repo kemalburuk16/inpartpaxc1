@@ -1,0 +1,54 @@
+{
+  "target_hashtags": [
+    "nature",
+    "photography",
+    "travel",
+    "lifestyle"
+  ],
+  "blacklisted_users": [],
+  "blacklisted_hashtags": [
+    "spam",
+    "bot"
+  ],
+  "daily_limits": {
+    "likes": 100,
+    "follows": 50,
+    "unfollows": 30,
+    "comments": 20
+  },
+  "hourly_limits": {
+    "likes": 15,
+    "follows": 8,
+    "unfollows": 5,
+    "comments": 3
+  },
+  "delays": {
+    "min_like_delay": 10,
+    "max_like_delay": 30,
+    "min_follow_delay": 20,
+    "max_follow_delay": 60,
+    "min_unfollow_delay": 15,
+    "max_unfollow_delay": 45
+  },
+  "safety": {
+    "max_consecutive_failures": 3,
+    "cooldown_after_failure": 300,
+    "respect_rate_limits": true,
+    "simulate_human_behavior": true
+  },
+  "follow_strategy": {
+    "target_users": [],
+    "follow_followers_of_target": true,
+    "follow_ratio_limit": 1.2,
+    "unfollow_after_days": 7,
+    "skip_verified_users": false,
+    "skip_private_users": true
+  },
+  "like_strategy": {
+    "like_recent_posts": true,
+    "max_posts_per_user": 3,
+    "skip_already_liked": true,
+    "min_likes_on_post": 0,
+    "max_likes_on_post": 10000
+  }
+}
