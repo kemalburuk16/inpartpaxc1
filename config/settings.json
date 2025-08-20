@@ -1,0 +1,45 @@
+{
+  "instagram": {
+    "rate_limits": {
+      "likes_per_hour": 60,
+      "follows_per_hour": 30,
+      "requests_per_minute": 20,
+      "min_delay_seconds": 10,
+      "max_delay_seconds": 30
+    },
+    "safety": {
+      "max_consecutive_errors": 3,
+      "cooldown_after_error_minutes": 15,
+      "respect_instagram_limits": true,
+      "random_delays": true
+    },
+    "hashtags": {
+      "target_tags": [
+        "photography",
+        "art",
+        "nature",
+        "travel"
+      ],
+      "posts_per_tag": 10,
+      "like_probability": 0.8
+    },
+    "following": {
+      "target_users": [],
+      "follow_followers_of": [],
+      "max_follows_per_user": 50,
+      "follow_probability": 0.6
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "logs/instagram_automation.log",
+    "max_file_size_mb": 10,
+    "backup_count": 5,
+    "console_output": true
+  },
+  "session": {
+    "use_existing_sessions": true,
+    "session_rotation": true,
+    "session_health_check": true
+  }
+}
