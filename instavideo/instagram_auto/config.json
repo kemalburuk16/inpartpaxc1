@@ -1,0 +1,55 @@
+{
+  "activity_settings": {
+    "like_probability": 0.7,
+    "follow_probability": 0.3,
+    "unfollow_probability": 0.1,
+    "comment_probability": 0.1,
+    "story_view_probability": 0.8
+  },
+  "timing_settings": {
+    "min_action_delay": 10,
+    "max_action_delay": 30,
+    "min_session_duration": 300,
+    "max_session_duration": 1800,
+    "min_break_duration": 1800,
+    "max_break_duration": 7200
+  },
+  "daily_limits": {
+    "max_likes_per_day": 500,
+    "max_follows_per_day": 100,
+    "max_unfollows_per_day": 50,
+    "max_comments_per_day": 20,
+    "max_story_views_per_day": 200
+  },
+  "session_limits": {
+    "max_likes_per_session": 50,
+    "max_follows_per_session": 10,
+    "max_unfollows_per_session": 5,
+    "max_comments_per_session": 3,
+    "max_story_views_per_session": 30
+  },
+  "browsing_settings": {
+    "explore_probability": 0.6,
+    "feed_probability": 0.8,
+    "reels_probability": 0.7,
+    "stories_probability": 0.5,
+    "highlights_probability": 0.3,
+    "min_browse_time": 30,
+    "max_browse_time": 180
+  },
+  "scheduler_settings": {
+    "auto_start": false,
+    "start_hour": 9,
+    "end_hour": 21,
+    "timezone": "Europe/Istanbul",
+    "weekend_activity": true,
+    "session_interval_minutes": 120
+  },
+  "safety_settings": {
+    "respect_rate_limits": true,
+    "random_delays": true,
+    "human_like_behavior": true,
+    "stop_on_challenge": true,
+    "max_daily_errors": 10
+  }
+}

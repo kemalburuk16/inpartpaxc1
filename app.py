@@ -3353,5 +3353,89 @@ def _session_get():
 def _limit_test():
     return {"ok": True}, 200
 
+# ============================================================================#
+#                           Instagram Automation API                          #
+# ============================================================================#
+
+@app.route("/api/automation/status")
+def api_automation_status():
+    """Get automation status"""
+    try:
+        from instavideo.instagram_auto import InstagramScheduler
+        scheduler = InstagramScheduler()
+        status = scheduler.get_scheduler_status()
+        return jsonify({"success": True, "data": status})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/automation/start", methods=['POST'])
+def api_automation_start():
+    """Start automation session"""
+    try:
+        from instavideo.instagram_auto import InstagramScheduler
+        scheduler = InstagramScheduler()
+        
+        data = request.get_json() or {}
+        duration = int(data.get('duration', 30))
+        session_count = int(data.get('session_count', 1))
+        
+        result = scheduler.start_automation_session(duration, session_count)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/automation/stop", methods=['POST'])
+def api_automation_stop():
+    """Stop automation sessions"""
+    try:
+        from instavideo.instagram_auto import InstagramScheduler
+        scheduler = InstagramScheduler()
+        
+        data = request.get_json() or {}
+        session_id = data.get('session_id')
+        
+        if session_id:
+            result = scheduler.stop_session(session_id)
+            return jsonify({"success": result})
+        else:
+            stopped_count = scheduler.stop_all_sessions()
+            return jsonify({"success": True, "stopped_sessions": stopped_count})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/automation/trigger", methods=['POST'])
+def api_automation_trigger():
+    """Manually trigger automation activity"""
+    try:
+        from instavideo.instagram_auto import InstagramScheduler
+        scheduler = InstagramScheduler()
+        
+        data = request.get_json() or {}
+        activity_type = data.get('activity_type', 'browse_feed')
+        target = data.get('target')
+        session_id = data.get('session_id')
+        
+        result = scheduler.manual_trigger_activity(activity_type, session_id, target)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/automation/sessions")
+def api_automation_sessions():
+    """Get automation session information"""
+    try:
+        from instavideo.instagram_auto import get_active_sessions, get_session_stats
+        
+        active_sessions = get_active_sessions()
+        stats = get_session_stats()
+        
+        return jsonify({
+            "success": True, 
+            "active_sessions": active_sessions,
+            "stats": stats
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == "__main__":
     app.run(debug=True)

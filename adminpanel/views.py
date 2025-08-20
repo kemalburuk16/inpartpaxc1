@@ -510,3 +510,125 @@ def api_analytics_summary():
 @login_required
 def api_analytics_realtime():
     return jsonify({"active_users": get_realtime_users()})
+
+# -------------------- Instagram Automation Routes --------------------
+@admin_bp.route('/instagram-automation')
+@login_required
+def instagram_automation():
+    return render_template("admin/instagram_automation.html")
+
+@admin_bp.route('/api/automation/status')
+@login_required
+def api_automation_status():
+    try:
+        from instavideo.instagram_auto import InstagramScheduler
+        scheduler = InstagramScheduler()
+        status = scheduler.get_scheduler_status()
+        return jsonify({"success": True, "data": status})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_bp.route('/api/automation/start', methods=['POST'])
+@login_required
+def api_automation_start():
+    try:
+        from instavideo.instagram_auto import InstagramScheduler
+        scheduler = InstagramScheduler()
+        
+        data = request.get_json() or {}
+        duration = int(data.get('duration', 30))
+        session_count = int(data.get('session_count', 1))
+        
+        result = scheduler.start_automation_session(duration, session_count)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_bp.route('/api/automation/stop', methods=['POST'])
+@login_required
+def api_automation_stop():
+    try:
+        from instavideo.instagram_auto import InstagramScheduler
+        scheduler = InstagramScheduler()
+        
+        data = request.get_json() or {}
+        session_id = data.get('session_id')
+        
+        if session_id:
+            result = scheduler.stop_session(session_id)
+            return jsonify({"success": result})
+        else:
+            stopped_count = scheduler.stop_all_sessions()
+            return jsonify({"success": True, "stopped_sessions": stopped_count})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_bp.route('/api/automation/scheduler/start', methods=['POST'])
+@login_required
+def api_scheduler_start():
+    try:
+        from instavideo.instagram_auto import InstagramScheduler
+        scheduler = InstagramScheduler()
+        result = scheduler.start_scheduler()
+        return jsonify({"success": result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_bp.route('/api/automation/scheduler/stop', methods=['POST'])
+@login_required
+def api_scheduler_stop():
+    try:
+        from instavideo.instagram_auto import InstagramScheduler
+        scheduler = InstagramScheduler()
+        result = scheduler.stop_scheduler()
+        return jsonify({"success": result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_bp.route('/api/automation/manual-trigger', methods=['POST'])
+@login_required
+def api_manual_trigger():
+    try:
+        from instavideo.instagram_auto import InstagramScheduler
+        scheduler = InstagramScheduler()
+        
+        data = request.get_json() or {}
+        activity_type = data.get('activity_type', 'browse_feed')
+        target = data.get('target')
+        session_id = data.get('session_id')
+        
+        result = scheduler.manual_trigger_activity(activity_type, session_id, target)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_bp.route('/api/automation/activity-log')
+@login_required
+def api_activity_log():
+    try:
+        from instavideo.instagram_auto import InstagramScheduler
+        scheduler = InstagramScheduler()
+        
+        limit = int(request.args.get('limit', 100))
+        activities = scheduler.get_activity_log(limit)
+        
+        return jsonify({"success": True, "activities": activities})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_bp.route('/api/automation/sessions')
+@login_required
+def api_automation_sessions():
+    try:
+        from instavideo.instagram_auto import get_active_sessions, get_session_stats
+        
+        active_sessions = get_active_sessions()
+        stats = get_session_stats()
+        
+        return jsonify({
+            "success": True, 
+            "active_sessions": active_sessions,
+            "stats": stats
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
