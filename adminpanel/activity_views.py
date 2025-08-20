@@ -28,11 +28,10 @@ def dashboard():
         # Get targets
         targets = activity_manager.get_targets()
         
-        # Get session status from session pool
+        # Get session status
         session_status = {
-            "total_sessions": len(activity_manager.session_pool.sessions),
-            "active_sessions": len([s for s in activity_manager.session_pool.sessions 
-                                  if s.get("status") == "active"]),
+            "total_sessions": 0,
+            "active_sessions": 0,
         }
         
         return render_template('admin/activity/dashboard.html',
