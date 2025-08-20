@@ -1,0 +1,296 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Beğenme Yönetimi · Admin{% endblock %}
+
+{% block content %}
+<div class="container-narrow">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">👍 Beğenme Yönetimi</h2>
+      <p class="text-muted">Hashtag bazlı otomatik beğenme sistemi</p>
+    </div>
+    <div>
+      <a href="{{ url_for('activity.dashboard') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Dashboard'a Dön
+      </a>
+    </div>
+  </div>
+
+  <!-- Hashtag Management -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Hedef Hashtag'ler</h5>
+    </div>
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-8">
+          <div class="input-group">
+            <span class="input-group-text">#</span>
+            <input type="text" class="form-control" id="newHashtag" placeholder="travel, food, nature (virgülle ayırın)">
+            <button class="btn btn-primary" id="addHashtagBtn">Ekle</button>
+          </div>
+          <div class="form-text">Birden fazla hashtag eklemek için virgülle ayırın</div>
+        </div>
+      </div>
+
+      <div id="hashtagList">
+        {% if hashtags %}
+          {% for hashtag in hashtags %}
+            <div class="hashtag-item d-inline-block me-2 mb-2" data-hashtag="{{ hashtag }}">
+              <span class="badge bg-primary fs-6 p-2">
+                #{{ hashtag }}
+                <button class="btn-close btn-close-white ms-2" type="button" onclick="removeHashtag('{{ hashtag }}')"></button>
+              </span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted" id="noHashtags">Henüz hashtag eklenmemiş</p>
+        {% endif %}
+      </div>
+
+      <div class="mt-3">
+        <button class="btn btn-success" id="saveHashtagsBtn">Hashtag'leri Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Like Actions -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Manuel Beğenme</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Hashtag</label>
+            <div class="input-group">
+              <span class="input-group-text">#</span>
+              <select class="form-select" id="manualHashtag">
+                <option value="">Seçin...</option>
+                {% for hashtag in hashtags %}
+                  <option value="{{ hashtag }}">{{ hashtag }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="mb-3">
+            <label class="form-label">Post Sayısı</label>
+            <input type="number" class="form-control" id="manualLimit" value="10" min="1" max="50">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="mb-3">
+            <label class="form-label">&nbsp;</label>
+            <button class="btn btn-primary w-100" id="manualLikeBtn">Beğenmeyi Başlat</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Like Activities -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Son Beğenme Aktiviteleri</h5>
+    </div>
+    <div class="card-body">
+      {% if like_logs %}
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Zaman</th>
+                <th>Hedef</th>
+                <th>Durum</th>
+                <th>Detay</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in like_logs[-20:] %}
+                <tr>
+                  <td><small>{{ log.timestamp[:19].replace('T', ' ') }}</small></td>
+                  <td>{{ log.target }}</td>
+                  <td>
+                    {% if log.success %}
+                      <span class="text-success"><i class="bi bi-check-circle"></i> Başarılı</span>
+                    {% else %}
+                      <span class="text-danger"><i class="bi bi-x-circle"></i> Başarısız</span>
+                    {% endif %}
+                  </td>
+                  <td><small>{{ log.details[:80] }}{% if log.details|length > 80 %}...{% endif %}</small></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted">Henüz beğenme aktivitesi yok</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  let currentHashtags = {{ hashtags|tojson }};
+
+  // Add hashtag
+  document.getElementById('addHashtagBtn').addEventListener('click', function() {
+    const input = document.getElementById('newHashtag');
+    const hashtags = input.value.split(',').map(h => h.trim().replace('#', ''));
+    
+    hashtags.forEach(hashtag => {
+      if (hashtag && !currentHashtags.includes(hashtag)) {
+        currentHashtags.push(hashtag);
+        addHashtagToDOM(hashtag);
+      }
+    });
+    
+    input.value = '';
+    updateManualHashtagSelect();
+    updateNoHashtagsMessage();
+  });
+
+  // Save hashtags
+  document.getElementById('saveHashtagsBtn').addEventListener('click', function() {
+    fetch('{{ url_for("activity.api_targets") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        hashtags: currentHashtags,
+        accounts: [] // Keep existing accounts, only update hashtags
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showAlert('Hashtag\'ler başarıyla kaydedildi', 'success');
+      } else {
+        showAlert(data.error, 'danger');
+      }
+    })
+    .catch(error => {
+      showAlert('Bir hata oluştu: ' + error.message, 'danger');
+    });
+  });
+
+  // Manual like
+  document.getElementById('manualLikeBtn').addEventListener('click', function() {
+    const hashtag = document.getElementById('manualHashtag').value;
+    const limit = document.getElementById('manualLimit').value;
+    
+    if (!hashtag) {
+      showAlert('Hashtag seçiniz', 'warning');
+      return;
+    }
+
+    this.disabled = true;
+    this.textContent = 'Beğenme işlemi devam ediyor...';
+
+    fetch('{{ url_for("activity.api_like_hashtag") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ hashtag: hashtag, limit: parseInt(limit) })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showAlert(`${data.liked_count}/${data.total_posts} post başarıyla beğenildi`, 'success');
+        setTimeout(() => {
+          location.reload(); // Refresh to show new logs
+        }, 2000);
+      } else {
+        showAlert(data.error, 'danger');
+      }
+      this.disabled = false;
+      this.textContent = 'Beğenmeyi Başlat';
+    })
+    .catch(error => {
+      showAlert('Bir hata oluştu: ' + error.message, 'danger');
+      this.disabled = false;
+      this.textContent = 'Beğenmeyi Başlat';
+    });
+  });
+
+  function addHashtagToDOM(hashtag) {
+    const container = document.getElementById('hashtagList');
+    const item = document.createElement('div');
+    item.className = 'hashtag-item d-inline-block me-2 mb-2';
+    item.setAttribute('data-hashtag', hashtag);
+    item.innerHTML = `
+      <span class="badge bg-primary fs-6 p-2">
+        #${hashtag}
+        <button class="btn-close btn-close-white ms-2" type="button" onclick="removeHashtag('${hashtag}')"></button>
+      </span>
+    `;
+    container.appendChild(item);
+  }
+
+  function updateManualHashtagSelect() {
+    const select = document.getElementById('manualHashtag');
+    const currentValue = select.value;
+    select.innerHTML = '<option value="">Seçin...</option>';
+    
+    currentHashtags.forEach(hashtag => {
+      const option = document.createElement('option');
+      option.value = hashtag;
+      option.textContent = hashtag;
+      if (hashtag === currentValue) {
+        option.selected = true;
+      }
+      select.appendChild(option);
+    });
+  }
+
+  function updateNoHashtagsMessage() {
+    const noHashtags = document.getElementById('noHashtags');
+    if (currentHashtags.length === 0) {
+      if (!noHashtags) {
+        const container = document.getElementById('hashtagList');
+        const p = document.createElement('p');
+        p.className = 'text-muted';
+        p.id = 'noHashtags';
+        p.textContent = 'Henüz hashtag eklenmemiş';
+        container.appendChild(p);
+      }
+    } else {
+      if (noHashtags) {
+        noHashtags.remove();
+      }
+    }
+  }
+
+  window.removeHashtag = function(hashtag) {
+    currentHashtags = currentHashtags.filter(h => h !== hashtag);
+    document.querySelector(`[data-hashtag="${hashtag}"]`).remove();
+    updateManualHashtagSelect();
+    updateNoHashtagsMessage();
+  };
+
+  function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+      alertDiv.remove();
+    }, 5000);
+  }
+});
+</script>
+{% endblock %}

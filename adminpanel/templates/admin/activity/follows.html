@@ -1,0 +1,343 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Takip Yönetimi · Admin{% endblock %}
+
+{% block content %}
+<div class="container-narrow">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">👥 Takip Yönetimi</h2>
+      <p class="text-muted">Hedef hesapları takip etme sistemi</p>
+    </div>
+    <div>
+      <a href="{{ url_for('activity.dashboard') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Dashboard'a Dön
+      </a>
+    </div>
+  </div>
+
+  <!-- Account Management -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Hedef Hesaplar</h5>
+    </div>
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-8">
+          <div class="input-group">
+            <span class="input-group-text">@</span>
+            <input type="text" class="form-control" id="newAccount" placeholder="username1, username2 (virgülle ayırın)">
+            <button class="btn btn-primary" id="addAccountBtn">Ekle</button>
+          </div>
+          <div class="form-text">Birden fazla hesap eklemek için virgülle ayırın</div>
+        </div>
+      </div>
+
+      <div id="accountList">
+        {% if accounts %}
+          {% for account in accounts %}
+            <div class="account-item d-inline-block me-2 mb-2" data-account="{{ account }}">
+              <span class="badge bg-info fs-6 p-2">
+                @{{ account }}
+                <button class="btn-close btn-close-white ms-2" type="button" onclick="removeAccount('{{ account }}')"></button>
+              </span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted" id="noAccounts">Henüz hesap eklenmemiş</p>
+        {% endif %}
+      </div>
+
+      <div class="mt-3">
+        <button class="btn btn-success" id="saveAccountsBtn">Hesapları Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Follow Actions -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Manuel Takip</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Kullanıcı Adı</label>
+            <div class="input-group">
+              <span class="input-group-text">@</span>
+              <input type="text" class="form-control" id="manualUsername" placeholder="username">
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="mb-3">
+            <label class="form-label">&nbsp;</label>
+            <button class="btn btn-info w-100" id="manualFollowBtn">Takip Et</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="alert alert-info">
+        <strong>Not:</strong> Bu özellik tek kullanıcıyı takip eder. Gelecek güncellemede hedef hesapların takipçilerini toplu takip etme özelliği eklenecek.
+      </div>
+    </div>
+  </div>
+
+  <!-- Follow Strategy Settings -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Takip Stratejisi</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Günlük Takip Limiti</label>
+            <input type="number" class="form-control" id="dailyFollowLimit" value="200" min="1" max="500">
+            <div class="form-text">Instagram limitlerini aşmamak için günlük maksimum takip sayısı</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Takipler Arası Bekleme (saniye)</label>
+            <div class="row">
+              <div class="col-6">
+                <input type="number" class="form-control" id="followDelayMin" value="60" min="30" max="300" placeholder="Min">
+              </div>
+              <div class="col-6">
+                <input type="number" class="form-control" id="followDelayMax" value="300" min="60" max="600" placeholder="Max">
+              </div>
+            </div>
+            <div class="form-text">İnsan benzeri davranış için rastgele bekleme süresi</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="saveStrategyBtn">Strateji Ayarlarını Kaydet</button>
+    </div>
+  </div>
+
+  <!-- Recent Follow Activities -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Son Takip Aktiviteleri</h5>
+    </div>
+    <div class="card-body">
+      {% if follow_logs %}
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Zaman</th>
+                <th>Hedef</th>
+                <th>Durum</th>
+                <th>Detay</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in follow_logs[-20:] %}
+                <tr>
+                  <td><small>{{ log.timestamp[:19].replace('T', ' ') }}</small></td>
+                  <td>{{ log.target }}</td>
+                  <td>
+                    {% if log.success %}
+                      <span class="text-success"><i class="bi bi-check-circle"></i> Başarılı</span>
+                    {% else %}
+                      <span class="text-danger"><i class="bi bi-x-circle"></i> Başarısız</span>
+                    {% endif %}
+                  </td>
+                  <td><small>{{ log.details[:80] }}{% if log.details|length > 80 %}...{% endif %}</small></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted">Henüz takip aktivitesi yok</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  let currentAccounts = {{ accounts|tojson }};
+
+  // Add account
+  document.getElementById('addAccountBtn').addEventListener('click', function() {
+    const input = document.getElementById('newAccount');
+    const accounts = input.value.split(',').map(a => a.trim().replace('@', ''));
+    
+    accounts.forEach(account => {
+      if (account && !currentAccounts.includes(account)) {
+        currentAccounts.push(account);
+        addAccountToDOM(account);
+      }
+    });
+    
+    input.value = '';
+    updateNoAccountsMessage();
+  });
+
+  // Save accounts
+  document.getElementById('saveAccountsBtn').addEventListener('click', function() {
+    fetch('{{ url_for("activity.api_targets") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        hashtags: [], // Keep existing hashtags, only update accounts
+        accounts: currentAccounts
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showAlert('Hesaplar başarıyla kaydedildi', 'success');
+      } else {
+        showAlert(data.error, 'danger');
+      }
+    })
+    .catch(error => {
+      showAlert('Bir hata oluştu: ' + error.message, 'danger');
+    });
+  });
+
+  // Manual follow
+  document.getElementById('manualFollowBtn').addEventListener('click', function() {
+    const username = document.getElementById('manualUsername').value.trim().replace('@', '');
+    
+    if (!username) {
+      showAlert('Kullanıcı adı gerekli', 'warning');
+      return;
+    }
+
+    this.disabled = true;
+    this.textContent = 'Takip ediliyor...';
+
+    fetch('{{ url_for("activity.api_follow_user") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username: username })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showAlert(data.message, 'success');
+        document.getElementById('manualUsername').value = '';
+        setTimeout(() => {
+          location.reload(); // Refresh to show new logs
+        }, 2000);
+      } else {
+        showAlert(data.error, 'danger');
+      }
+      this.disabled = false;
+      this.textContent = 'Takip Et';
+    })
+    .catch(error => {
+      showAlert('Bir hata oluştu: ' + error.message, 'danger');
+      this.disabled = false;
+      this.textContent = 'Takip Et';
+    });
+  });
+
+  // Save strategy settings
+  document.getElementById('saveStrategyBtn').addEventListener('click', function() {
+    const dailyLimit = document.getElementById('dailyFollowLimit').value;
+    const delayMin = document.getElementById('followDelayMin').value;
+    const delayMax = document.getElementById('followDelayMax').value;
+
+    // Get current config first
+    fetch('{{ url_for("activity.api_config") }}')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const config = data.config;
+        config.daily_follow_limit = parseInt(dailyLimit);
+        config.follow_delay_min = parseInt(delayMin);
+        config.follow_delay_max = parseInt(delayMax);
+
+        // Save updated config
+        return fetch('{{ url_for("activity.api_config") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(config)
+        });
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showAlert('Strateji ayarları kaydedildi', 'success');
+      } else {
+        showAlert(data.error, 'danger');
+      }
+    })
+    .catch(error => {
+      showAlert('Bir hata oluştu: ' + error.message, 'danger');
+    });
+  });
+
+  function addAccountToDOM(account) {
+    const container = document.getElementById('accountList');
+    const item = document.createElement('div');
+    item.className = 'account-item d-inline-block me-2 mb-2';
+    item.setAttribute('data-account', account);
+    item.innerHTML = `
+      <span class="badge bg-info fs-6 p-2">
+        @${account}
+        <button class="btn-close btn-close-white ms-2" type="button" onclick="removeAccount('${account}')"></button>
+      </span>
+    `;
+    container.appendChild(item);
+  }
+
+  function updateNoAccountsMessage() {
+    const noAccounts = document.getElementById('noAccounts');
+    if (currentAccounts.length === 0) {
+      if (!noAccounts) {
+        const container = document.getElementById('accountList');
+        const p = document.createElement('p');
+        p.className = 'text-muted';
+        p.id = 'noAccounts';
+        p.textContent = 'Henüz hesap eklenmemiş';
+        container.appendChild(p);
+      }
+    } else {
+      if (noAccounts) {
+        noAccounts.remove();
+      }
+    }
+  }
+
+  window.removeAccount = function(account) {
+    currentAccounts = currentAccounts.filter(a => a !== account);
+    document.querySelector(`[data-account="${account}"]`).remove();
+    updateNoAccountsMessage();
+  };
+
+  function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+      alertDiv.remove();
+    }, 5000);
+  }
+});
+</script>
+{% endblock %}

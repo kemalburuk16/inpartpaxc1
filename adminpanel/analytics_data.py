@@ -1,15 +1,24 @@
 # /var/www/instavido/adminpanel/analytics_data.py
 
-from google.analytics.data_v1beta import BetaAnalyticsDataClient
-from google.analytics.data_v1beta.types import RunReportRequest
-from google.oauth2 import service_account
 import os
+import json
+# Minimal mock implementations
+def get_summary_7days():
+    """Mock analytics data for 7 days"""
+    return {
+        "total_pageviews": 12500,
+        "unique_visitors": 8300,
+        "bounce_rate": 0.35,
+        "avg_session_duration": "2:45"
+    }
 
-SERVICE_ACCOUNT_FILE = "/var/www/instavido/anly/webb1-466620-5d22f4311e8f.json"
-PROPERTY_ID = "499908879"  # <-- BURAYA GA4 mülk ID'ni yaz (sadece rakam!)
-
-credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE)
-client = BetaAnalyticsDataClient(credentials=credentials)
+def get_realtime_users():
+    """Mock realtime users data"""
+    return {
+        "active_users": 156,
+        "current_hour": 89,
+        "peak_hour": 234
+    }
 
 def get_summary_7days():
     """Son 7 günün temel analytics verileri"""
