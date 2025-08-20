@@ -7,7 +7,7 @@
     "fail_count": 0,
     "success_count": 0,
     "last_used": "2025-08-12 01:16:26",
-    "status": "invalid",
+    "status": "active",
     "session_key": "77106066",
     "blocked": false
   },
@@ -19,7 +19,7 @@
     "fail_count": 0,
     "success_count": 0,
     "last_used": "2025-08-12 12:30:02",
-    "status": "invalid",
+    "status": "active",
     "session_key": "98784560",
     "blocked": false
   },
@@ -31,7 +31,7 @@
     "fail_count": 0,
     "success_count": 2,
     "last_used": "2025-08-13 23:24:08",
-    "status": "invalid",
+    "status": "active",
     "session_key": "77620610",
     "cookies": {
       "sessionid": "76412375039%3AuDpofmx0D2grJl%3A23%3AAYeTUMHtR1JfT7Fo75PKz2ZCiOdSfMRMSuUmvIf8fw",

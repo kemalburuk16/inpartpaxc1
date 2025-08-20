@@ -1,0 +1,7 @@
+requests>=2.31.0
+flask>=2.3.0
+flask-session>=0.4.0
+flask-babelex>=0.9.4
+flask-limiter>=3.0.0
+redis>=4.5.0
+python-dotenv>=1.0.0
