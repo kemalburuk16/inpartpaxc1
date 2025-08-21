@@ -1,0 +1,698 @@
+{% extends "admin/base.html" %}
+{% block title %}Aktivite Logları · Admin{% endblock %}
+
+{% block page_title %}Aktivite Logları{% endblock %}
+{% block page_title_desktop %}📊 Aktivite Logları{% endblock %}
+{% block page_breadcrumb %}Gerçekleştirilen otomasyon aktivitelerinin detayları{% endblock %}
+
+{% block content %}
+<!-- İstatistik Kartları -->
+<div class="row g-3 mb-4">
+  <div class="col-md-2">
+    <div class="iv-card p-3">
+      <div class="text-center">
+        <div class="fw-bold text-primary" id="total-activities">-</div>
+        <div class="text-muted small">Toplam</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-2">
+    <div class="iv-card p-3">
+      <div class="text-center">
+        <div class="fw-bold text-success" id="completed-activities">-</div>
+        <div class="text-muted small">Tamamlanan</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-2">
+    <div class="iv-card p-3">
+      <div class="text-center">
+        <div class="fw-bold text-warning" id="pending-activities">-</div>
+        <div class="text-muted small">Bekleyen</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-2">
+    <div class="iv-card p-3">
+      <div class="text-center">
+        <div class="fw-bold text-info" id="running-activities">-</div>
+        <div class="text-muted small">Çalışan</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-2">
+    <div class="iv-card p-3">
+      <div class="text-center">
+        <div class="fw-bold text-danger" id="failed-activities">-</div>
+        <div class="text-muted small">Başarısız</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-2">
+    <div class="iv-card p-3">
+      <div class="text-center">
+        <div class="fw-bold text-muted" id="success-rate">-</div>
+        <div class="text-muted small">Başarı %</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filtreler ve Kontroller -->
+<div class="row g-3 mb-4">
+  <div class="col-md-8">
+    <div class="iv-card">
+      <div class="iv-card-header">
+        <h5 class="mb-0">Filtreler</h5>
+      </div>
+      <div class="p-3">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Aktivite Türü</label>
+            <select class="form-select" id="activity-type-filter">
+              <option value="">Tümü</option>
+              <option value="like">Beğeni</option>
+              <option value="follow">Takip</option>
+              <option value="comment">Yorum</option>
+              <option value="story_view">Story İzle</option>
+              <option value="profile_visit">Profil Ziyaret</option>
+              <option value="explore_browse">Keşfet Gezin</option>
+              <option value="session_keepalive">Keep-Alive</option>
+            </select>
+          </div>
+          
+          <div class="col-md-3">
+            <label class="form-label">Durum</label>
+            <select class="form-select" id="status-filter">
+              <option value="">Tümü</option>
+              <option value="pending">Bekleyen</option>
+              <option value="running">Çalışan</option>
+              <option value="completed">Tamamlanan</option>
+              <option value="failed">Başarısız</option>
+              <option value="cancelled">İptal Edilmiş</option>
+            </select>
+          </div>
+          
+          <div class="col-md-3">
+            <label class="form-label">Kullanıcı</label>
+            <select class="form-select" id="user-filter">
+              <option value="">Tümü</option>
+            </select>
+          </div>
+          
+          <div class="col-md-3">
+            <label class="form-label">Zaman Aralığı</label>
+            <select class="form-select" id="time-filter">
+              <option value="24">Son 24 Saat</option>
+              <option value="168">Son 7 Gün</option>
+              <option value="720">Son 30 Gün</option>
+              <option value="">Tümü</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="mt-3">
+          <button class="btn btn-primary" onclick="applyFilters()">
+            <i class="fas fa-filter"></i> Filtrele
+          </button>
+          <button class="btn btn-secondary" onclick="clearFilters()">
+            <i class="fas fa-times"></i> Temizle
+          </button>
+          <button class="btn btn-info" onclick="exportLogs()">
+            <i class="fas fa-download"></i> Dışa Aktar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4">
+    <div class="iv-card">
+      <div class="iv-card-header">
+        <h5 class="mb-0">Gerçek Zamanlı</h5>
+      </div>
+      <div class="p-3">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="auto-refresh" checked>
+          <label class="form-check-label" for="auto-refresh">
+            Otomatik Yenile (10s)
+          </label>
+        </div>
+        
+        <button class="btn btn-success w-100 mt-2" onclick="refreshLogs()">
+          <i class="fas fa-sync"></i> Şimdi Yenile
+        </button>
+        
+        <div class="mt-2">
+          <small class="text-muted">
+            Son güncelleme: <span id="last-update">-</span>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Aktivite Türü İstatistikleri -->
+<div class="iv-card mb-4">
+  <div class="iv-card-header">
+    <h5 class="mb-0">Aktivite Türü İstatistikleri</h5>
+  </div>
+  <div class="p-3">
+    <div class="row g-3" id="activity-type-stats">
+      <!-- Aktivite türü istatistikleri buraya yüklenecek -->
+    </div>
+  </div>
+</div>
+
+<!-- Aktivite Listesi -->
+<div class="iv-card">
+  <div class="iv-card-header">
+    <h5 class="mb-0">Aktivite Listesi</h5>
+  </div>
+  <div class="p-3">
+    <div class="table-responsive">
+      <table class="table table-hover" id="activities-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Tarih</th>
+            <th>Kullanıcı</th>
+            <th>Aktivite</th>
+            <th>Hedef</th>
+            <th>Durum</th>
+            <th>Süre</th>
+            <th>Deneme</th>
+            <th>İşlemler</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="9" class="text-center text-muted">Yükleniyor...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination -->
+    <nav aria-label="Aktivite sayfalama">
+      <ul class="pagination justify-content-center" id="pagination">
+        <!-- Pagination burada oluşturulacak -->
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<!-- Activity Detail Modal -->
+<div class="modal fade" id="activityDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Aktivite Detayları</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="activity-details">
+          <!-- Aktivite detayları buraya yüklenecek -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+        <button type="button" class="btn btn-warning" onclick="retryActivity()" id="retry-btn" style="display: none;">
+          <i class="fas fa-redo"></i> Yeniden Dene
+        </button>
+        <button type="button" class="btn btn-danger" onclick="cancelActivity()" id="cancel-btn" style="display: none;">
+          <i class="fas fa-times"></i> İptal Et
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Global değişkenler
+let currentActivities = [];
+let currentPage = 1;
+let itemsPerPage = 50;
+let autoRefreshInterval;
+let selectedActivityId = null;
+
+// Sayfa yüklendiğinde
+document.addEventListener('DOMContentLoaded', function() {
+    loadActivities();
+    loadUserList();
+    
+    // Auto refresh
+    startAutoRefresh();
+    
+    // Event listeners
+    document.getElementById('auto-refresh').addEventListener('change', function() {
+        if (this.checked) {
+            startAutoRefresh();
+        } else {
+            stopAutoRefresh();
+        }
+    });
+});
+
+function loadActivities() {
+    const params = new URLSearchParams();
+    params.append('limit', itemsPerPage);
+    
+    fetch(`/srdr-proadmin/api/automation/activities?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentActivities = data.activities;
+                updateActivityStats();
+                renderActivitiesTable();
+                updateLastUpdate();
+            } else {
+                console.error('Error loading activities:', data.error);
+                showToast('Aktiviteler yüklenemedi: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading activities:', error);
+            showToast('Aktiviteler yüklenirken hata oluştu', 'error');
+        });
+    
+    // Ayrıca genel istatistikleri de yükle
+    loadActivityTypeStats();
+}
+
+function loadActivityTypeStats() {
+    fetch('/srdr-proadmin/api/automation/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderActivityTypeStats(data.activity_stats);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading activity type stats:', error);
+        });
+}
+
+function loadUserList() {
+    fetch('/srdr-proadmin/api/automation/sessions')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const userFilter = document.getElementById('user-filter');
+                userFilter.innerHTML = '<option value="">Tümü</option>';
+                
+                const users = [...new Set(data.sessions.map(s => s.user))];
+                users.forEach(user => {
+                    userFilter.innerHTML += `<option value="${user}">${user}</option>`;
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading user list:', error);
+        });
+}
+
+function updateActivityStats() {
+    if (!currentActivities.length) return;
+    
+    const stats = {
+        total: currentActivities.length,
+        completed: currentActivities.filter(a => a.status === 'completed').length,
+        pending: currentActivities.filter(a => a.status === 'pending').length,
+        running: currentActivities.filter(a => a.status === 'running').length,
+        failed: currentActivities.filter(a => a.status === 'failed').length
+    };
+    
+    const successRate = stats.total > 0 ? 
+        Math.round((stats.completed / (stats.completed + stats.failed)) * 100) || 0 : 0;
+    
+    document.getElementById('total-activities').textContent = stats.total;
+    document.getElementById('completed-activities').textContent = stats.completed;
+    document.getElementById('pending-activities').textContent = stats.pending;
+    document.getElementById('running-activities').textContent = stats.running;
+    document.getElementById('failed-activities').textContent = stats.failed;
+    document.getElementById('success-rate').textContent = successRate + '%';
+}
+
+function renderActivityTypeStats(activityStats) {
+    const container = document.getElementById('activity-type-stats');
+    
+    if (!activityStats.by_type) {
+        container.innerHTML = '<div class="col-12 text-muted text-center">İstatistik bulunamadı</div>';
+        return;
+    }
+    
+    container.innerHTML = Object.entries(activityStats.by_type).map(([type, stats]) => {
+        const successRate = stats.total > 0 ? 
+            Math.round((stats.completed / stats.total) * 100) : 0;
+        
+        return `
+            <div class="col-md-3">
+                <div class="iv-card p-3">
+                    <div class="text-center">
+                        <div class="fw-bold">${getActivityTypeLabel(type)}</div>
+                        <div class="text-muted small">Toplam: ${stats.total}</div>
+                        <div class="progress mt-2" style="height: 15px;">
+                            <div class="progress-bar bg-success" style="width: ${stats.completed/(stats.total)*100}%"></div>
+                            <div class="progress-bar bg-danger" style="width: ${stats.failed/(stats.total)*100}%"></div>
+                        </div>
+                        <div class="small mt-1">Başarı: %${successRate}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderActivitiesTable() {
+    const tbody = document.querySelector('#activities-table tbody');
+    
+    if (!currentActivities.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Aktivite bulunamadı</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = currentActivities.map(activity => {
+        const statusBadge = getStatusBadge(activity.status);
+        const createdDate = new Date(activity.created_at * 1000).toLocaleString('tr-TR');
+        const duration = calculateDuration(activity);
+        
+        return `
+            <tr onclick="showActivityDetails('${activity.id}')" style="cursor: pointer;">
+                <td><code>${activity.id.substring(0, 8)}...</code></td>
+                <td>${createdDate}</td>
+                <td><strong>${activity.session_user}</strong></td>
+                <td>
+                    <span class="badge bg-secondary">${getActivityTypeLabel(activity.activity_type)}</span>
+                </td>
+                <td>${activity.target || '-'}</td>
+                <td>${statusBadge}</td>
+                <td>${duration}</td>
+                <td>
+                    <span class="badge bg-info">${activity.retry_count}/${activity.max_retries}</span>
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-info btn-sm" onclick="event.stopPropagation(); showActivityDetails('${activity.id}')" title="Detaylar">
+                            <i class="fas fa-info"></i>
+                        </button>
+                        ${activity.status === 'failed' ? 
+                            `<button class="btn btn-outline-warning btn-sm" onclick="event.stopPropagation(); retryActivityDirect('${activity.id}')" title="Yeniden Dene">
+                                <i class="fas fa-redo"></i>
+                            </button>` : ''
+                        }
+                        ${activity.status === 'pending' ? 
+                            `<button class="btn btn-outline-danger btn-sm" onclick="event.stopPropagation(); cancelActivityDirect('${activity.id}')" title="İptal Et">
+                                <i class="fas fa-times"></i>
+                            </button>` : ''
+                        }
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function getStatusBadge(status) {
+    const badges = {
+        'pending': '<span class="badge bg-warning">Bekleyen</span>',
+        'running': '<span class="badge bg-info">Çalışan</span>',
+        'completed': '<span class="badge bg-success">Tamamlanan</span>',
+        'failed': '<span class="badge bg-danger">Başarısız</span>',
+        'cancelled': '<span class="badge bg-secondary">İptal</span>'
+    };
+    return badges[status] || '<span class="badge bg-light">Bilinmiyor</span>';
+}
+
+function getActivityTypeLabel(type) {
+    const labels = {
+        'like': 'Beğeni',
+        'follow': 'Takip',
+        'comment': 'Yorum',
+        'story_view': 'Story İzle',
+        'profile_visit': 'Profil Ziyaret',
+        'explore_browse': 'Keşfet Gezin',
+        'session_keepalive': 'Keep-Alive'
+    };
+    return labels[type] || type;
+}
+
+function calculateDuration(activity) {
+    if (!activity.completed_at) {
+        return '-';
+    }
+    
+    const duration = activity.completed_at - activity.created_at;
+    if (duration < 60) {
+        return `${Math.round(duration)}s`;
+    } else if (duration < 3600) {
+        return `${Math.round(duration / 60)}m`;
+    } else {
+        return `${Math.round(duration / 3600)}h`;
+    }
+}
+
+function showActivityDetails(activityId) {
+    selectedActivityId = activityId;
+    const activity = currentActivities.find(a => a.id === activityId);
+    
+    if (!activity) return;
+    
+    const modal = new bootstrap.Modal(document.getElementById('activityDetailModal'));
+    
+    const detailsDiv = document.getElementById('activity-details');
+    detailsDiv.innerHTML = `
+        <div class="row g-3">
+            <div class="col-md-6">
+                <h6>Genel Bilgiler</h6>
+                <table class="table table-sm">
+                    <tr><td>ID:</td><td><code>${activity.id}</code></td></tr>
+                    <tr><td>Aktivite Türü:</td><td><strong>${getActivityTypeLabel(activity.activity_type)}</strong></td></tr>
+                    <tr><td>Kullanıcı:</td><td><strong>${activity.session_user}</strong></td></tr>
+                    <tr><td>Hedef:</td><td>${activity.target || '-'}</td></tr>
+                    <tr><td>Durum:</td><td>${getStatusBadge(activity.status)}</td></tr>
+                    <tr><td>Deneme:</td><td>${activity.retry_count}/${activity.max_retries}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Zaman Bilgileri</h6>
+                <table class="table table-sm">
+                    <tr><td>Oluşturma:</td><td>${new Date(activity.created_at * 1000).toLocaleString('tr-TR')}</td></tr>
+                    <tr><td>Zamanlanma:</td><td>${new Date(activity.scheduled_time * 1000).toLocaleString('tr-TR')}</td></tr>
+                    <tr><td>Tamamlanma:</td><td>${activity.completed_at ? new Date(activity.completed_at * 1000).toLocaleString('tr-TR') : '-'}</td></tr>
+                    <tr><td>Süre:</td><td>${calculateDuration(activity)}</td></tr>
+                </table>
+            </div>
+        </div>
+        
+        ${activity.error_message ? `
+            <div class="mt-3">
+                <h6>Hata Mesajı</h6>
+                <div class="alert alert-danger">
+                    <code>${activity.error_message}</code>
+                </div>
+            </div>
+        ` : ''}
+        
+        ${activity.metadata && Object.keys(activity.metadata).length > 0 ? `
+            <div class="mt-3">
+                <h6>Metadata</h6>
+                <pre class="bg-light p-2 rounded"><code>${JSON.stringify(activity.metadata, null, 2)}</code></pre>
+            </div>
+        ` : ''}
+    `;
+    
+    // Aksiyon butonlarını göster/gizle
+    const retryBtn = document.getElementById('retry-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    
+    retryBtn.style.display = activity.status === 'failed' ? 'inline-block' : 'none';
+    cancelBtn.style.display = activity.status === 'pending' ? 'inline-block' : 'none';
+    
+    modal.show();
+}
+
+function retryActivity() {
+    if (!selectedActivityId) return;
+    
+    retryActivityDirect(selectedActivityId);
+    bootstrap.Modal.getInstance(document.getElementById('activityDetailModal')).hide();
+}
+
+function cancelActivity() {
+    if (!selectedActivityId) return;
+    
+    cancelActivityDirect(selectedActivityId);
+    bootstrap.Modal.getInstance(document.getElementById('activityDetailModal')).hide();
+}
+
+function retryActivityDirect(activityId) {
+    fetch('/srdr-proadmin/api/automation/retry-activity', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            activity_id: activityId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Aktivite yeniden deneme için zamanlandı', 'success');
+            loadActivities();
+        } else {
+            showToast('Aktivite yeniden denemeye alınamadı: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showToast('Hata: ' + error.message, 'error');
+    });
+}
+
+function cancelActivityDirect(activityId) {
+    if (!confirm('Bu aktiviteyi iptal etmek istediğinizden emin misiniz?')) {
+        return;
+    }
+    
+    fetch('/srdr-proadmin/api/automation/cancel-activity', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            activity_id: activityId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Aktivite iptal edildi', 'success');
+            loadActivities();
+        } else {
+            showToast('Aktivite iptal edilemedi: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showToast('Hata: ' + error.message, 'error');
+    });
+}
+
+function applyFilters() {
+    // Filtreleme mantığı burada implement edilecek
+    showToast('Filtreler uygulandı', 'info');
+    loadActivities();
+}
+
+function clearFilters() {
+    document.getElementById('activity-type-filter').value = '';
+    document.getElementById('status-filter').value = '';
+    document.getElementById('user-filter').value = '';
+    document.getElementById('time-filter').value = '24';
+    
+    loadActivities();
+    showToast('Filtreler temizlendi', 'info');
+}
+
+function exportLogs() {
+    // CSV export işlemi
+    showToast('Loglar dışa aktarılıyor...', 'info');
+    
+    const csvContent = generateCSV();
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `aktivite_loglari_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    showToast('Loglar dışa aktarıldı', 'success');
+}
+
+function generateCSV() {
+    const headers = ['ID', 'Tarih', 'Kullanıcı', 'Aktivite', 'Hedef', 'Durum', 'Süre', 'Deneme', 'Hata'];
+    const rows = currentActivities.map(activity => [
+        activity.id,
+        new Date(activity.created_at * 1000).toLocaleString('tr-TR'),
+        activity.session_user,
+        getActivityTypeLabel(activity.activity_type),
+        activity.target || '',
+        activity.status,
+        calculateDuration(activity),
+        `${activity.retry_count}/${activity.max_retries}`,
+        activity.error_message || ''
+    ]);
+    
+    const csvContent = [headers, ...rows]
+        .map(row => row.map(field => `"${field}"`).join(','))
+        .join('\n');
+    
+    return csvContent;
+}
+
+function refreshLogs() {
+    loadActivities();
+    showToast('Loglar yenilendi', 'success');
+}
+
+function updateLastUpdate() {
+    document.getElementById('last-update').textContent = new Date().toLocaleTimeString('tr-TR');
+}
+
+function startAutoRefresh() {
+    stopAutoRefresh();
+    autoRefreshInterval = setInterval(() => {
+        if (document.getElementById('auto-refresh').checked) {
+            loadActivities();
+        }
+    }, 10000); // 10 saniye
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+}
+
+function showToast(message, type = 'info') {
+    // Bootstrap toast implementasyonu (automation_sessions.html'deki ile aynı)
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    
+    const toastElement = toastContainer.lastElementChild;
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+    });
+}
+</script>
+{% endblock %}

@@ -13,3 +13,4 @@ admin_bp = Blueprint(
 # (Bu importlar admin_bp tanımını KULLANIR, tekrar blueprint tanımlamaz)
 from . import views  # noqa: E402,F401
 from . import ads_views  # noqa: E402,F401
+from . import automation_views  # noqa: E402,F401

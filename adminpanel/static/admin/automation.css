@@ -1,0 +1,481 @@
+/**
+ * Instagram Automation CSS
+ * Otomasyon admin panel için özel stiller
+ */
+
+/* Ana container stiller */
+.automation-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Kart stiller */
+.iv-card {
+    background: #fff;
+    border: 1px solid #e3e6f0;
+    border-radius: 0.35rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    transition: all 0.3s ease;
+}
+
+.iv-card:hover {
+    box-shadow: 0 0.25rem 2rem 0 rgba(58, 59, 69, 0.2);
+    transform: translateY(-2px);
+}
+
+.iv-card-header {
+    background: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    padding: 1rem 1.25rem;
+    border-radius: 0.35rem 0.35rem 0 0;
+}
+
+/* Status badge'ler */
+.automation-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.automation-status .badge {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.status-indicator.active {
+    background-color: #1cc88a;
+    animation: pulse 1.5s infinite;
+}
+
+.status-indicator.inactive {
+    background-color: #858796;
+}
+
+.status-indicator.error {
+    background-color: #e74a3b;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(28, 200, 138, 0.7);
+    }
+    
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(28, 200, 138, 0);
+    }
+    
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(28, 200, 138, 0);
+    }
+}
+
+/* İstatistik kartları */
+.stats-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-card .stats-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.1;
+    font-size: 3rem;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stats-label {
+    font-size: 0.875rem;
+    color: #858796;
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
+}
+
+/* Progress bar özelleştirmeleri */
+.progress-session {
+    height: 20px;
+    background-color: #f8f9fc;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-session .progress-bar {
+    transition: width 0.6s ease;
+    font-size: 0.75rem;
+    line-height: 20px;
+}
+
+/* Activity türü badge'leri */
+.activity-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+}
+
+.activity-badge.like {
+    background-color: #e83e8c;
+    color: white;
+}
+
+.activity-badge.follow {
+    background-color: #20c997;
+    color: white;
+}
+
+.activity-badge.comment {
+    background-color: #fd7e14;
+    color: white;
+}
+
+.activity-badge.story_view {
+    background-color: #6f42c1;
+    color: white;
+}
+
+.activity-badge.profile_visit {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.activity-badge.explore_browse {
+    background-color: #6c757d;
+    color: white;
+}
+
+.activity-badge.session_keepalive {
+    background-color: #198754;
+    color: white;
+}
+
+/* Tablo stiller */
+.automation-table {
+    font-size: 0.875rem;
+}
+
+.automation-table th {
+    background-color: #f8f9fc;
+    border-top: none;
+    font-weight: 600;
+    color: #5a5c69;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
+}
+
+.automation-table td {
+    vertical-align: middle;
+    border-color: #e3e6f0;
+}
+
+.automation-table tbody tr:hover {
+    background-color: #f8f9fc;
+}
+
+/* Action button group */
+.action-buttons {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.action-buttons .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 0.25rem;
+}
+
+/* Modal özelleştirmeleri */
+.modal-automation .modal-content {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+}
+
+.modal-automation .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.modal-automation .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Form stiller */
+.form-automation .form-label {
+    font-weight: 600;
+    color: #5a5c69;
+    margin-bottom: 0.5rem;
+}
+
+.form-automation .form-control,
+.form-automation .form-select {
+    border: 1px solid #d1d3e2;
+    border-radius: 0.35rem;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.form-automation .form-control:focus,
+.form-automation .form-select:focus {
+    border-color: #bac8f3;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+/* Loading stiller */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.loading-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #4e73df;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Session health indicator */
+.session-health {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.session-health-icon {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.session-health-icon.healthy {
+    background-color: #1cc88a;
+}
+
+.session-health-icon.warning {
+    background-color: #f6c23e;
+}
+
+.session-health-icon.error {
+    background-color: #e74a3b;
+}
+
+/* Activity timeline */
+.activity-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.activity-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e3e6f0;
+}
+
+.activity-timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.activity-timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -1.75rem;
+    top: 0.5rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #4e73df;
+    border: 2px solid #fff;
+}
+
+.activity-timeline-item.completed::before {
+    background: #1cc88a;
+}
+
+.activity-timeline-item.failed::before {
+    background: #e74a3b;
+}
+
+.activity-timeline-item.pending::before {
+    background: #f6c23e;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stats-number {
+        font-size: 1.5rem;
+    }
+    
+    .automation-table {
+        font-size: 0.8rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* Tooltip stiller */
+.tooltip-automation {
+    --bs-tooltip-bg: #5a5c69;
+    --bs-tooltip-color: #fff;
+}
+
+/* Alert stiller */
+.alert-automation {
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.alert-automation .alert-heading {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Quick actions */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.quick-action-card {
+    text-align: center;
+    padding: 1.5rem;
+    border: 2px dashed #d1d3e2;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.quick-action-card:hover {
+    border-color: #4e73df;
+    background-color: #f8f9fc;
+    transform: translateY(-2px);
+}
+
+.quick-action-card .icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #4e73df;
+}
+
+.quick-action-card .title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #5a5c69;
+    margin-bottom: 0.5rem;
+}
+
+.quick-action-card .description {
+    font-size: 0.875rem;
+    color: #858796;
+}
+
+/* Filters */
+.filters-container {
+    background: #f8f9fc;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.filters-container .form-label {
+    font-weight: 600;
+    color: #5a5c69;
+    margin-bottom: 0.5rem;
+}
+
+/* Charts (eğer ileride eklenirse) */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 1rem 0;
+}
+
+/* Dark mode desteği */
+@media (prefers-color-scheme: dark) {
+    .iv-card {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .iv-card-header {
+        background: #1a202c;
+        border-color: #4a5568;
+    }
+    
+    .automation-table th {
+        background-color: #1a202c;
+        color: #e2e8f0;
+    }
+    
+    .automation-table td {
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .automation-table tbody tr:hover {
+        background-color: #2d3748;
+    }
+}
+
+/* Print stiller */
+@media print {
+    .action-buttons,
+    .filters-container,
+    .quick-actions {
+        display: none !important;
+    }
+    
+    .iv-card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+}
