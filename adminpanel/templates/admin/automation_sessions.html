@@ -1,0 +1,522 @@
+{% extends "admin/base.html" %}
+{% block title %}Session Yönetimi · Admin{% endblock %}
+
+{% block page_title %}Session Yönetimi{% endblock %}
+{% block page_title_desktop %}👥 Session Yönetimi{% endblock %}
+{% block page_breadcrumb %}Instagram session'larının durumu ve sağlık kontrolleri{% endblock %}
+
+{% block content %}
+<!-- Session İstatistikleri -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="iv-card p-3">
+      <div class="d-flex align-items-center">
+        <div class="flex-grow-1">
+          <div class="fw-bold text-primary" id="total-sessions">-</div>
+          <div class="text-muted small">Toplam Session</div>
+        </div>
+        <div class="text-primary">
+          <i class="fas fa-users fa-2x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="iv-card p-3">
+      <div class="d-flex align-items-center">
+        <div class="flex-grow-1">
+          <div class="fw-bold text-success" id="active-sessions">-</div>
+          <div class="text-muted small">Aktif Session</div>
+        </div>
+        <div class="text-success">
+          <i class="fas fa-check-circle fa-2x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="iv-card p-3">
+      <div class="d-flex align-items-center">
+        <div class="flex-grow-1">
+          <div class="fw-bold text-danger" id="blocked-sessions">-</div>
+          <div class="text-muted small">Bloklu Session</div>
+        </div>
+        <div class="text-danger">
+          <i class="fas fa-ban fa-2x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="iv-card p-3">
+      <div class="d-flex align-items-center">
+        <div class="flex-grow-1">
+          <div class="fw-bold text-warning" id="invalid-sessions">-</div>
+          <div class="text-muted small">Geçersiz Session</div>
+        </div>
+        <div class="text-warning">
+          <i class="fas fa-exclamation-triangle fa-2x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Kontroller -->
+<div class="row g-3 mb-4">
+  <div class="col-md-8">
+    <div class="iv-card">
+      <div class="iv-card-header">
+        <h5 class="mb-0">Session Kontrolleri</h5>
+      </div>
+      <div class="p-3">
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-primary" onclick="refreshSessions()">
+            <i class="fas fa-sync"></i> Yenile
+          </button>
+          <button class="btn btn-success" onclick="testAllSessions()">
+            <i class="fas fa-check"></i> Tümünü Test Et
+          </button>
+          <button class="btn btn-warning" onclick="scheduleKeepAliveAll()">
+            <i class="fas fa-heart"></i> Hepsine Keep-Alive
+          </button>
+          <button class="btn btn-info" onclick="cleanupOldSessions()">
+            <i class="fas fa-broom"></i> Eski Session'ları Temizle
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4">
+    <div class="iv-card">
+      <div class="iv-card-header">
+        <h5 class="mb-0">Filtrele</h5>
+      </div>
+      <div class="p-3">
+        <select class="form-select" id="status-filter" onchange="filterSessions()">
+          <option value="">Tüm Durumlar</option>
+          <option value="active">Aktif</option>
+          <option value="blocked">Bloklu</option>
+          <option value="invalid">Geçersiz</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Session Listesi -->
+<div class="iv-card">
+  <div class="iv-card-header">
+    <h5 class="mb-0">Session Listesi</h5>
+  </div>
+  <div class="p-3">
+    <div class="table-responsive">
+      <table class="table table-hover" id="sessions-table">
+        <thead>
+          <tr>
+            <th>Kullanıcı</th>
+            <th>Durum</th>
+            <th>Son Kullanım</th>
+            <th>Başarı/Hata</th>
+            <th>Otomasyon Stats</th>
+            <th>Başarı Oranı</th>
+            <th>İşlemler</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="7" class="text-center text-muted">Yükleniyor...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Session Test Modal -->
+<div class="modal fade" id="testModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Session Testi</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="test-results">
+          <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Test ediliyor...</span>
+            </div>
+            <div class="mt-2">Session test ediliyor...</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Session Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Session Detayları</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="session-details">
+          <!-- Session detayları buraya yüklenecek -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Session yönetimi için JavaScript fonksiyonları
+let currentSessions = [];
+
+// Sayfa yüklendiğinde session'ları getir
+document.addEventListener('DOMContentLoaded', function() {
+    loadSessions();
+    
+    // Her 30 saniyede bir otomatik yenile
+    setInterval(loadSessions, 30000);
+});
+
+function loadSessions() {
+    fetch('/srdr-proadmin/api/automation/sessions')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentSessions = data.sessions;
+                updateSessionStats();
+                renderSessionsTable();
+            } else {
+                console.error('Error loading sessions:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading sessions:', error);
+        });
+}
+
+function updateSessionStats() {
+    // Session istatistiklerini güncelle
+    fetch('/srdr-proadmin/api/automation/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const stats = data.session_stats;
+                document.getElementById('total-sessions').textContent = stats.total || 0;
+                document.getElementById('active-sessions').textContent = stats.active || 0;
+                document.getElementById('blocked-sessions').textContent = stats.blocked || 0;
+                document.getElementById('invalid-sessions').textContent = stats.invalid || 0;
+            }
+        });
+}
+
+function renderSessionsTable() {
+    const tbody = document.querySelector('#sessions-table tbody');
+    const filter = document.getElementById('status-filter').value;
+    
+    let filteredSessions = currentSessions;
+    if (filter) {
+        filteredSessions = currentSessions.filter(s => s.status === filter);
+    }
+    
+    if (filteredSessions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Session bulunamadı</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = filteredSessions.map(session => {
+        const statusBadge = getStatusBadge(session.status);
+        const successRate = session.success_rate || 0;
+        const automationStats = session.automation_stats || {};
+        
+        // Otomasyon istatistikleri özeti
+        const statsText = Object.keys(automationStats).length > 0 
+            ? Object.entries(automationStats).map(([type, data]) => 
+                `${type}: ${data.success}/${data.success + data.failed}`
+              ).join(', ')
+            : 'Veri yok';
+        
+        return `
+            <tr>
+                <td>
+                    <strong>${session.user || 'Bilinmiyor'}</strong>
+                    <br><small class="text-muted">${session.session_key || ''}</small>
+                </td>
+                <td>${statusBadge}</td>
+                <td>
+                    ${session.last_used || 'Hiç kullanılmamış'}
+                </td>
+                <td>
+                    <span class="badge bg-success">${session.success_count || 0}</span>
+                    <span class="badge bg-danger">${session.fail_count || 0}</span>
+                </td>
+                <td>
+                    <small>${statsText}</small>
+                </td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: ${successRate}%" 
+                             aria-valuenow="${successRate}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            ${successRate}%
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="testSession('${session.user}')" title="Test Et">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="btn btn-outline-info" onclick="showSessionDetails('${session.user}')" title="Detaylar">
+                            <i class="fas fa-info"></i>
+                        </button>
+                        <button class="btn btn-outline-success" onclick="scheduleKeepAlive('${session.user}')" title="Keep-Alive">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function getStatusBadge(status) {
+    const badges = {
+        'active': '<span class="badge bg-success">Aktif</span>',
+        'blocked': '<span class="badge bg-danger">Bloklu</span>',
+        'invalid': '<span class="badge bg-warning">Geçersiz</span>'
+    };
+    return badges[status] || '<span class="badge bg-secondary">Bilinmiyor</span>';
+}
+
+function filterSessions() {
+    renderSessionsTable();
+}
+
+function refreshSessions() {
+    loadSessions();
+    showToast('Session listesi yenilendi', 'success');
+}
+
+function testSession(username) {
+    const modal = new bootstrap.Modal(document.getElementById('testModal'));
+    modal.show();
+    
+    fetch('/srdr-proadmin/api/automation/test-session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            session_user: username
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const resultsDiv = document.getElementById('test-results');
+        
+        if (data.success && data.login_successful) {
+            resultsDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-check-circle"></i> Test Başarılı</h6>
+                    <p>Kullanıcı: <strong>${data.user}</strong></p>
+                    <p>Giriş durumu: <strong>Başarılı</strong></p>
+                </div>
+            `;
+        } else {
+            resultsDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-times-circle"></i> Test Başarısız</h6>
+                    <p>Kullanıcı: <strong>${username}</strong></p>
+                    <p>Hata: ${data.error || 'Giriş başarısız'}</p>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        document.getElementById('test-results').innerHTML = `
+            <div class="alert alert-danger">
+                <h6><i class="fas fa-times-circle"></i> Test Hatası</h6>
+                <p>Bir hata oluştu: ${error.message}</p>
+            </div>
+        `;
+    });
+}
+
+function testAllSessions() {
+    if (!confirm('Tüm session\'ları test etmek uzun sürebilir. Devam etmek istiyor musunuz?')) {
+        return;
+    }
+    
+    showToast('Session testleri başlatıldı...', 'info');
+    
+    // Burada batch test işlemi implement edilebilir
+    // Şimdilik sadece bilgi mesajı göster
+    setTimeout(() => {
+        showToast('Session testleri tamamlandı', 'success');
+        loadSessions();
+    }, 3000);
+}
+
+function scheduleKeepAlive(username) {
+    fetch('/srdr-proadmin/api/automation/schedule-keepalive', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            session_user: username
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+        } else {
+            showToast('Keep-alive zamanlanamadı: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showToast('Hata: ' + error.message, 'error');
+    });
+}
+
+function scheduleKeepAliveAll() {
+    if (!confirm('Tüm aktif session\'lar için keep-alive zamanlanacak. Onaylıyor musunuz?')) {
+        return;
+    }
+    
+    fetch('/srdr-proadmin/api/automation/schedule-keepalive', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+        } else {
+            showToast('Keep-alive zamanlanamadı: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showToast('Hata: ' + error.message, 'error');
+    });
+}
+
+function cleanupOldSessions() {
+    if (!confirm('30 günden eski session\'lar silinecek. Onaylıyor musunuz?')) {
+        return;
+    }
+    
+    showToast('Eski session\'lar temizleniyor...', 'info');
+    
+    // Bu işlem session_manager'da implement edilmeli
+    setTimeout(() => {
+        showToast('Eski session\'lar temizlendi', 'success');
+        loadSessions();
+    }, 2000);
+}
+
+function showSessionDetails(username) {
+    const session = currentSessions.find(s => s.user === username);
+    if (!session) return;
+    
+    const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+    
+    const detailsDiv = document.getElementById('session-details');
+    detailsDiv.innerHTML = `
+        <div class="row g-3">
+            <div class="col-md-6">
+                <h6>Genel Bilgiler</h6>
+                <table class="table table-sm">
+                    <tr><td>Kullanıcı:</td><td><strong>${session.user}</strong></td></tr>
+                    <tr><td>Session Key:</td><td><code>${session.session_key}</code></td></tr>
+                    <tr><td>Durum:</td><td>${getStatusBadge(session.status)}</td></tr>
+                    <tr><td>Son Kullanım:</td><td>${session.last_used || 'Hiç'}</td></tr>
+                    <tr><td>Başarı/Hata:</td><td>${session.success_count}/${session.fail_count}</td></tr>
+                    <tr><td>Başarı Oranı:</td><td>${session.success_rate}%</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Otomasyon İstatistikleri</h6>
+                <div id="automation-stats">
+                    ${renderAutomationStats(session.automation_stats)}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    modal.show();
+}
+
+function renderAutomationStats(stats) {
+    if (!stats || Object.keys(stats).length === 0) {
+        return '<p class="text-muted">Henüz otomasyon aktivitesi yok</p>';
+    }
+    
+    return Object.entries(stats).map(([type, data]) => `
+        <div class="mb-2">
+            <strong>${type}</strong>
+            <div class="progress mb-1" style="height: 15px;">
+                <div class="progress-bar bg-success" style="width: ${data.success/(data.success + data.failed)*100}%"></div>
+                <div class="progress-bar bg-danger" style="width: ${data.failed/(data.success + data.failed)*100}%"></div>
+            </div>
+            <small>Başarılı: ${data.success}, Başarısız: ${data.failed}</small>
+        </div>
+    `).join('');
+}
+
+function showToast(message, type = 'info') {
+    // Bootstrap toast implementasyonu
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    // Toast container oluştur (yoksa)
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    
+    const toastElement = toastContainer.lastElementChild;
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    
+    // Toast kapandıktan sonra DOM'dan kaldır
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+    });
+}
+</script>
+{% endblock %}

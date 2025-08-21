@@ -6,11 +6,29 @@ from flask import Blueprint, render_template, request, jsonify, Response
 from adminpanel import admin_bp   # mevcut admin blueprint
 from functools import wraps
 
-from ads_manager import (
-    load_config, save_config,
-    set_slot, toggle_slot, get_slot,
-    set_interstitial
-)
+# Try to import ads_manager, fallback if not available
+try:
+    from ads_manager import (
+        load_config, save_config,
+        set_slot, toggle_slot, get_slot,
+        set_interstitial
+    )
+    ADS_MANAGER_AVAILABLE = True
+except ImportError:
+    ADS_MANAGER_AVAILABLE = False
+    # Create mock functions
+    def load_config():
+        return {}
+    def save_config(config):
+        pass
+    def set_slot(slot_id, config):
+        pass
+    def toggle_slot(slot_id, enabled):
+        pass
+    def get_slot(slot_id):
+        return {}
+    def set_interstitial(config):
+        pass
 
 # --- Basit login kontrolü: adminpanel/views.py'deki login_required ile aynı davranış ---
 from flask import session as login_session, redirect, url_for

@@ -1,0 +1,306 @@
+{% extends "admin/base.html" %}
+{% block title %}Instagram Otomasyon · Admin{% endblock %}
+
+{% block page_title %}Instagram Otomasyon{% endblock %}
+{% block page_title_desktop %}🤖 Instagram Otomasyon Kontrol Paneli{% endblock %}
+{% block page_breadcrumb %}Session'ları canlı tutun ve insansı aktiviteler gerçekleştirin{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="iv-card p-3">
+      <div class="d-flex align-items-center">
+        <div class="flex-grow-1">
+          <div class="fw-bold text-success" id="active-sessions">-</div>
+          <div class="text-muted small">Aktif Session</div>
+        </div>
+        <div class="text-success">
+          <i class="fas fa-check-circle fa-2x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="iv-card p-3">
+      <div class="d-flex align-items-center">
+        <div class="flex-grow-1">
+          <div class="fw-bold text-info" id="pending-activities">-</div>
+          <div class="text-muted small">Bekleyen Aktivite</div>
+        </div>
+        <div class="text-info">
+          <i class="fas fa-clock fa-2x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="iv-card p-3">
+      <div class="d-flex align-items-center">
+        <div class="flex-grow-1">
+          <div class="fw-bold text-primary" id="completed-today">-</div>
+          <div class="text-muted small">Bugün Tamamlanan</div>
+        </div>
+        <div class="text-primary">
+          <i class="fas fa-chart-line fa-2x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="iv-card p-3">
+      <div class="d-flex align-items-center">
+        <div class="flex-grow-1">
+          <div class="fw-bold" id="success-rate">-</div>
+          <div class="text-muted small">Başarı Oranı</div>
+        </div>
+        <div class="text-warning">
+          <i class="fas fa-percentage fa-2x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Otomasyon Kontrolleri -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="iv-card">
+      <div class="iv-card-header">
+        <h5 class="mb-0">Otomasyon Kontrolleri</h5>
+      </div>
+      <div class="p-3">
+        <div class="d-flex gap-2 mb-3">
+          <button class="btn btn-success" id="start-automation">
+            <i class="fas fa-play"></i> Başlat
+          </button>
+          <button class="btn btn-warning" id="stop-automation">
+            <i class="fas fa-pause"></i> Duraklat
+          </button>
+          <button class="btn btn-info" id="schedule-keepalive">
+            <i class="fas fa-heart"></i> Keep-Alive Zamanla
+          </button>
+        </div>
+        
+        <div class="mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-secondary" id="automation-status">Durum: Bilinmiyor</span>
+            <span class="badge bg-light text-dark" id="last-update">Son Güncelleme: -</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-6">
+    <div class="iv-card">
+      <div class="iv-card-header">
+        <h5 class="mb-0">Hızlı Aktiviteler</h5>
+      </div>
+      <div class="p-3">
+        <div class="row g-2">
+          <div class="col-6">
+            <button class="btn btn-outline-primary w-100" onclick="scheduleActivity('like')">
+              <i class="fas fa-heart"></i> Beğeni
+            </button>
+          </div>
+          <div class="col-6">
+            <button class="btn btn-outline-success w-100" onclick="scheduleActivity('follow')">
+              <i class="fas fa-user-plus"></i> Takip
+            </button>
+          </div>
+          <div class="col-6">
+            <button class="btn btn-outline-warning w-100" onclick="scheduleActivity('comment')">
+              <i class="fas fa-comment"></i> Yorum
+            </button>
+          </div>
+          <div class="col-6">
+            <button class="btn btn-outline-info w-100" onclick="scheduleActivity('story_view')">
+              <i class="fas fa-eye"></i> Story
+            </button>
+          </div>
+        </div>
+        
+        <hr>
+        
+        <button class="btn btn-secondary w-100" id="schedule-random">
+          <i class="fas fa-random"></i> Rastgele Aktivite Zamanla
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hızlı Menü -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <a href="{{ url_for('admin.automation_sessions') }}" class="iv-card d-block text-decoration-none text-dark h-100">
+      <div class="p-3 text-center">
+        <i class="fas fa-users fa-3x text-primary mb-2"></i>
+        <div class="fw-bold">Session Yönetimi</div>
+        <div class="text-muted small">Session durumları ve sağlık kontrolleri</div>
+      </div>
+    </a>
+  </div>
+  
+  <div class="col-md-4">
+    <a href="{{ url_for('admin.automation_activity_logs') }}" class="iv-card d-block text-decoration-none text-dark h-100">
+      <div class="p-3 text-center">
+        <i class="fas fa-list fa-3x text-success mb-2"></i>
+        <div class="fw-bold">Aktivite Logları</div>
+        <div class="text-muted small">Gerçekleştirilen aktivitelerin detayları</div>
+      </div>
+    </a>
+  </div>
+  
+  <div class="col-md-4">
+    <div class="iv-card" onclick="showConfigModal()" style="cursor: pointer;">
+      <div class="p-3 text-center">
+        <i class="fas fa-cog fa-3x text-warning mb-2"></i>
+        <div class="fw-bold">Ayarlar</div>
+        <div class="text-muted small">Otomasyon parametrelerini düzenle</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Son Aktiviteler -->
+<div class="iv-card">
+  <div class="iv-card-header">
+    <h5 class="mb-0">Son Aktiviteler</h5>
+  </div>
+  <div class="p-3">
+    <div class="table-responsive">
+      <table class="table table-sm" id="recent-activities-table">
+        <thead>
+          <tr>
+            <th>Tarih</th>
+            <th>Kullanıcı</th>
+            <th>Aktivite</th>
+            <th>Hedef</th>
+            <th>Durum</th>
+            <th>İşlemler</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="6" class="text-center text-muted">Yükleniyor...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Config Modal -->
+<div class="modal fade" id="configModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Otomasyon Ayarları</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="config-form">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Günlük Beğeni Limiti</label>
+              <input type="number" class="form-control" name="daily_likes_limit" min="0" max="500">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Günlük Takip Limiti</label>
+              <input type="number" class="form-control" name="daily_follows_limit" min="0" max="100">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Günlük Yorum Limiti</label>
+              <input type="number" class="form-control" name="daily_comments_limit" min="0" max="50">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Beğeni Olasılığı (%)</label>
+              <input type="number" class="form-control" name="like_probability" min="0" max="100" step="0.1">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Takip Olasılığı (%)</label>
+              <input type="number" class="form-control" name="follow_probability" min="0" max="100" step="0.1">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Yorum Olasılığı (%)</label>
+              <input type="number" class="form-control" name="comment_probability" min="0" max="100" step="0.1">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Min Gecikme (saniye)</label>
+              <input type="number" class="form-control" name="min_action_delay" min="1" max="60">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Max Gecikme (saniye)</label>
+              <input type="number" class="form-control" name="max_action_delay" min="5" max="120">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+        <button type="button" class="btn btn-primary" onclick="saveConfig()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Activity Schedule Modal -->
+<div class="modal fade" id="activityModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Aktivite Zamanla</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="activity-form">
+          <div class="mb-3">
+            <label class="form-label">Aktivite Türü</label>
+            <select class="form-select" name="activity_type" required>
+              <option value="">Seçiniz...</option>
+              <option value="like">Beğeni</option>
+              <option value="follow">Takip</option>
+              <option value="comment">Yorum</option>
+              <option value="story_view">Story İzle</option>
+              <option value="profile_visit">Profil Ziyaret</option>
+              <option value="explore_browse">Keşfet Gezin</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Session Kullanıcısı</label>
+            <select class="form-select" name="session_user" required>
+              <option value="">Yükleniyor...</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Hedef (Opsiyonel)</label>
+            <input type="text" class="form-control" name="target" placeholder="Hashtag veya kullanıcı adı">
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Gecikme (saniye)</label>
+            <input type="number" class="form-control" name="delay_seconds" value="0" min="0" max="3600">
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Sayı (Opsiyonel)</label>
+            <input type="number" class="form-control" name="count" value="1" min="1" max="10">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+        <button type="button" class="btn btn-primary" onclick="submitActivity()">Zamanla</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='admin/automation.js') }}"></script>
+{% endblock %}
